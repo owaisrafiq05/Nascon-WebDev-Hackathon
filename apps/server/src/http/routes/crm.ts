@@ -8,6 +8,7 @@ import { CompanyModel, type CompanyDoc } from '../../db/models/company.js';
 import { ContactModel, type ContactDoc } from '../../db/models/contact.js';
 import { OpportunityModel } from '../../db/models/opportunity.js';
 import { queryActivity, recordActivity } from '../../repositories/activity-repository.js';
+import { acknowledgeOnRecordedAction } from '../../services/lead-service.js';
 import { customerView } from '../../services/customer-view-service.js';
 import {
   actorFor,
@@ -352,6 +353,7 @@ export function createCrmRouter(): Router {
         { _id: contact._id, workspaceId: auth.workspaceId },
         { $set: { lastActivityAt: new Date() } },
       );
+      await acknowledgeOnRecordedAction(auth, contact._id, actor, 'a note');
 
       res.status(201).json({ recorded: true });
     },

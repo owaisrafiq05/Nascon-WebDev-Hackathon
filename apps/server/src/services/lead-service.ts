@@ -26,6 +26,7 @@ import { appendAuditEvent } from '../repositories/audit-repository.js';
 import { appendOutbox } from '../repositories/outbox.js';
 import { cancelJobsFor, escalationKey, scheduleJob } from '../repositories/job-queue.js';
 import type { Actor } from './crm-service.js';
+import { queueEscalationAlert } from './notification-service.js';
 import type { AuthContext } from './session-service.js';
 
 /**
@@ -155,6 +156,7 @@ export interface CreateLeadInput {
 
 export interface CreateLeadResult {
   readonly leadId: Types.ObjectId;
+  readonly contactId: Types.ObjectId | null;
   readonly assigneeMembershipId: Types.ObjectId | null;
   readonly unassignedReason: UnassignableReason | null;
 }
@@ -170,8 +172,28 @@ export async function createLead(input: CreateLeadInput): Promise<CreateLeadResu
   const session = await mongoose.startSession();
   try {
     let result: CreateLeadResult | undefined;
-
     await session.withTransaction(async () => {
+      result = await createLeadInSession(input, session);
+    });
+    if (result === undefined) throw new Error('create lead produced no result');
+    return result;
+  } finally {
+    await session.endSession();
+  }
+}
+
+/**
+ * The body of `createLead`, for a caller that is already inside a transaction,
+ * such as an inbound message that must create its contact, lead and message
+ * atomically (I1.5, I1.8).
+ */
+export async function createLeadInSession(
+  input: CreateLeadInput,
+  session: ClientSession,
+): Promise<CreateLeadResult> {
+  let result: CreateLeadResult | undefined;
+  {
+    {
       const settings = await settingsFor(input.workspaceId, session);
 
       // A new person arriving by form or message becomes a contact (I1.5).
@@ -333,16 +355,14 @@ export async function createLead(input: CreateLeadInput): Promise<CreateLeadResu
 
       result = {
         leadId: lead._id,
+        contactId,
         assigneeMembershipId: assigneeId,
         unassignedReason: decision.assigned ? null : decision.reason,
       };
-    });
-
-    if (result === undefined) throw new Error('create lead produced no result');
-    return result;
-  } finally {
-    await session.endSession();
+    }
   }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -397,6 +417,14 @@ export async function acknowledgeLead(
       // Lost the race to an escalation: the state we read is gone, so this
       // acknowledgement does not apply to it.
       if (updated.modifiedCount !== 1) return;
+
+      // Kept apart from `acknowledgedAt`, which a reassignment clears: time to
+      // first response is measured to the first acknowledgement ever.
+      await LeadModel.updateOne(
+        { _id, workspaceId: auth.workspaceId, firstAcknowledgedAt: null },
+        { $set: { firstAcknowledgedAt: now } },
+        { session },
+      );
 
       // No further escalation for this lead (F3.4).
       await cancelJobsFor(_id, session);
@@ -653,7 +681,21 @@ export async function escalateLead(
         );
       }
 
-      // P5 relays this to the browser; P10 sends the external alert (F3.9).
+      // The external alert is owed in the same transaction (F3.9, I4.1).
+      if (nextAssignee !== null) {
+        await queueEscalationAlert(
+          {
+            lead,
+            newOwner: nextAssignee,
+            level: next.level,
+            target: next.target,
+            assignmentVersion: expectedVersion + 1,
+          },
+          session,
+        );
+      }
+
+      // Relayed to the browser by the API's outbox relay (Q11).
       await emitOutbox(
         lead.workspaceId,
         'lead.escalated',
@@ -941,6 +983,48 @@ export async function membershipLabels(
   }
 
   return labels;
+}
+
+/**
+ * Section 7: a lead is acknowledged when its assignee "performed a recorded
+ * action on the lead (note, message, call log, stage change, appointment)".
+ *
+ * Called by each of those actions with the contact they touched. Only leads
+ * assigned to the actor are settled: a colleague's note does not stop the
+ * owner's clock.
+ */
+export async function acknowledgeOnRecordedAction(
+  auth: AuthContext,
+  contactId: Types.ObjectId | null,
+  actor: Actor,
+  action: string,
+): Promise<number> {
+  if (contactId === null) return 0;
+
+  const now = new Date();
+  await LeadModel.updateMany(
+    { workspaceId: auth.workspaceId, contactId, status: 'open' },
+    { $set: { lastActivityAt: now } },
+  );
+
+  const awaiting = await LeadModel.find({
+    workspaceId: auth.workspaceId,
+    contactId,
+    status: 'open',
+    assigneeMembershipId: actor.membershipId,
+    assignmentStatus: { $in: ['pending_ack', 'escalated'] },
+  })
+    .select('_id')
+    .lean();
+
+  let settled = 0;
+  for (const lead of awaiting) {
+    const result = await acknowledgeLead(auth, lead._id.toString(), actor, {
+      recordedAction: action,
+    });
+    if (result.acknowledged) settled += 1;
+  }
+  return settled;
 }
 
 export { contactDisplayName, conflict };

@@ -34,6 +34,8 @@ export interface LeadDoc {
    */
   firstAssignedAt: Date | null;
   acknowledgedAt: Date | null;
+  /** The first acknowledgement ever, for time to first response (Section 7). */
+  firstAcknowledgedAt: Date | null;
 
   /** The escalation state machine's state, from packages/domain. */
   assignmentStatus: AssignmentStatus;
@@ -72,6 +74,7 @@ const leadSchema = new Schema<LeadDoc>(
     assignedAt: { type: Date, default: null },
     firstAssignedAt: { type: Date, default: null },
     acknowledgedAt: { type: Date, default: null },
+    firstAcknowledgedAt: { type: Date, default: null },
 
     assignmentStatus: {
       type: String,

@@ -6,6 +6,7 @@ import {
   type PipelineStage,
 } from '@ubmp/domain';
 import { notFound, validationFailed, versionConflict } from '@ubmp/shared';
+import { acknowledgeOnRecordedAction } from './lead-service.js';
 import mongoose, { Types } from 'mongoose';
 
 import { ContactModel, contactDisplayName } from '../db/models/contact.js';
@@ -375,6 +376,10 @@ export async function moveOpportunityToStage(
     });
 
     if (moved === undefined) throw new Error('move produced no result');
+
+    // A stage change is a recorded action, which acknowledges the mover's
+    // leads on this contact (Section 7).
+    await acknowledgeOnRecordedAction(auth, existing.contactId, actor, 'a stage change');
     return moved;
   } finally {
     await session.endSession();

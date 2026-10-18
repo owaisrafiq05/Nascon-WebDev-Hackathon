@@ -15,6 +15,7 @@ import { MembershipModel } from '../db/models/membership.js';
 import { OpportunityModel } from '../db/models/opportunity.js';
 import { PermissionSetModel } from '../db/models/permission-set.js';
 import { PipelineModel } from '../db/models/pipeline.js';
+import { SavedListModel } from '../db/models/saved-list.js';
 import { SessionModel } from '../db/models/session.js';
 import { UserModel } from '../db/models/user.js';
 import { WorkspaceModel } from '../db/models/workspace.js';
@@ -60,6 +61,7 @@ const MODELS = [
   OpportunityModel,
   PermissionSetModel,
   PipelineModel,
+  SavedListModel,
   SessionModel,
   UserModel,
   WorkspaceModel,

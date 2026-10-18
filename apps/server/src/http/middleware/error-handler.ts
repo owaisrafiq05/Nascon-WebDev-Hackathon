@@ -21,6 +21,16 @@ function fromZodError(error: ZodError): AppError {
   });
 }
 
+/**
+ * MongoDB reports a unique-index violation as error 11000. It means the caller
+ * asked for something that already exists, which is a conflict rather than a
+ * server fault, so it is mapped centrally here instead of each service
+ * remembering to catch it.
+ */
+function isDuplicateKeyError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
+}
+
 /** `express.json()` raises this when the body is malformed or too large. */
 function isBodyParserError(error: unknown): error is Error & { status: number; type?: string } {
   return (
@@ -34,6 +44,15 @@ function isBodyParserError(error: unknown): error is Error & { status: number; t
 function toAppError(error: unknown): AppError {
   if (isAppError(error)) return error;
   if (error instanceof ZodError) return fromZodError(error);
+
+  if (isDuplicateKeyError(error)) {
+    // The duplicated value is not echoed back: it came from the caller, and
+    // the index name would expose the schema.
+    return new AppError(ERROR_CODES.CONFLICT, 'That already exists.', {
+      hint: 'Use a different name, and try again.',
+      cause: error,
+    });
+  }
 
   if (isBodyParserError(error)) {
     const tooLarge = error.status === 413;

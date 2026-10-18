@@ -11,6 +11,7 @@
  *   masking       opportunity value field protection        (F1.4)
  *   custom-fields definitions and the validation built from them (F2.2, F2.4)
  *   pipeline      stage ordering and safe stage deletion    (F2.5)
+ *   filters       the filter DSL behind saved lists         (F2.6)
  */
 export * from './assignment.js';
 export * from './audit-events.js';
@@ -18,6 +19,7 @@ export * from './availability.js';
 export * from './custom-fields.js';
 export * from './masking.js';
 export * from './escalation.js';
+export * from './filters.js';
 export * from './metrics.js';
 export * from './permissions.js';
 export * from './pipeline.js';

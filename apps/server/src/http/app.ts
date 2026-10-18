@@ -18,6 +18,7 @@ import { createCrmRouter } from './routes/crm.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMembersRouter } from './routes/members.js';
 import { createPipelinesRouter } from './routes/pipelines.js';
+import { createSavedListsRouter } from './routes/saved-lists.js';
 import { createPermissionSetsRouter } from './routes/permission-sets.js';
 
 export const API_PREFIX = '/api';
@@ -113,6 +114,7 @@ export function createApp({
   app.use(API_PREFIX, createMembersRouter(config));
   app.use(API_PREFIX, createPermissionSetsRouter());
   app.use(API_PREFIX, createPipelinesRouter());
+  app.use(API_PREFIX, createSavedListsRouter());
 
   app.use(notFoundHandler());
   app.use(errorHandler(logger));

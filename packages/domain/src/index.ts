@@ -4,3 +4,4 @@
  */
 export * from './assignment.js';
 export * from './availability.js';
+export * from './escalation.js';

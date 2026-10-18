@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { apiRequest } from '../../lib/api.js';
@@ -62,13 +62,28 @@ export function useSaveDashboardPreferences() {
         method: 'PUT',
         body: { hiddenTiles },
       }),
+    // Optimistic: the checkbox follows the click at once instead of snapping
+    // back until the server answers. A failure restores what was there.
+    onMutate: async (hiddenTiles) => {
+      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
+      const previous = queryClient.getQueriesData<Dashboard>({ queryKey: ['dashboard'] });
+      setHiddenTiles(queryClient, hiddenTiles);
+      return { previous };
+    },
+    onError: (_error, _hiddenTiles, context) => {
+      for (const [key, data] of context?.previous ?? []) queryClient.setQueryData(key, data);
+    },
     onSuccess: ({ hiddenTiles }) => {
-      // Preferences are per member, not per range, so every cached range updates.
-      queryClient.setQueriesData<Dashboard>({ queryKey: ['dashboard'] }, (old) =>
-        old === undefined ? old : { ...old, hiddenTiles },
-      );
+      setHiddenTiles(queryClient, hiddenTiles);
     },
   });
+}
+
+/** Preferences are per member, not per range, so every cached range updates. */
+function setHiddenTiles(queryClient: QueryClient, hiddenTiles: string[]): void {
+  queryClient.setQueriesData<Dashboard>({ queryKey: ['dashboard'] }, (old) =>
+    old === undefined ? old : { ...old, hiddenTiles },
+  );
 }
 
 export function drillDownHref(drillDown: { path: string; query: Record<string, string> }): string {

@@ -1,0 +1,30 @@
+{
+  "name": "@ubmp/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure business rules: assignment, escalation and metric definitions. No I/O.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@ubmp/config": "workspace:*",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.5"
+  }
+}

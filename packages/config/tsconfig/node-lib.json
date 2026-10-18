@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node library (emits declarations to dist)",
+  "extends": "./base.json",
+  // `outDir` and `rootDir` are deliberately absent: a path in an extended config
+  // resolves against *this* file's directory, so each package declares its own.
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": false
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@ubmp/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript compiler presets for every workspace package",
+  "exports": {
+    "./tsconfig/*.json": "./tsconfig/*.json"
+  },
+  "files": [
+    "tsconfig"
+  ]
+}

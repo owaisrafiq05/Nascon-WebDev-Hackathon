@@ -1,0 +1,8 @@
+{
+  "extends": "@ubmp/config/tsconfig/node-lib.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node application (server, worker)",
+  "extends": "./base.json",
+  // `outDir` and `rootDir` are deliberately absent: a path in an extended config
+  // resolves against *this* file's directory, so each app declares its own.
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "declaration": false,
+    "sourceMap": true
+  }
+}

@@ -11,7 +11,8 @@
     "start": "node --env-file-if-exists=../../.env dist/index.js",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed": "tsx --env-file-if-exists=../../.env src/seed/index.ts"
   },
   "dependencies": {
     "@ubmp/domain": "workspace:*",

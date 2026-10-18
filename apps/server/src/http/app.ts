@@ -14,6 +14,9 @@ import { loginRateLimiter } from './middleware/rate-limit.js';
 import { requestId } from './middleware/request-id.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHealthRouter } from './routes/health.js';
+import { createMembersRouter } from './routes/members.js';
+import { createOpportunitiesRouter } from './routes/opportunities.js';
+import { createPermissionSetsRouter } from './routes/permission-sets.js';
 
 export const API_PREFIX = '/api';
 
@@ -102,6 +105,10 @@ export function createApp({
       loginRateLimiter: loginRateLimiterOverride ?? loginRateLimiter(config),
     }),
   );
+
+  app.use(API_PREFIX, createMembersRouter(config));
+  app.use(API_PREFIX, createPermissionSetsRouter());
+  app.use(API_PREFIX, createOpportunitiesRouter());
 
   app.use(notFoundHandler());
   app.use(errorHandler(logger));

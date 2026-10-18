@@ -8,6 +8,7 @@ import type { ServerConfig } from '../config.js';
 import { AuditEventModel } from '../db/models/audit-event.js';
 import { InviteModel } from '../db/models/invite.js';
 import { MembershipModel } from '../db/models/membership.js';
+import { OpportunityModel } from '../db/models/opportunity.js';
 import { PermissionSetModel } from '../db/models/permission-set.js';
 import { SessionModel } from '../db/models/session.js';
 import { UserModel } from '../db/models/user.js';
@@ -47,6 +48,7 @@ const MODELS = [
   AuditEventModel,
   InviteModel,
   MembershipModel,
+  OpportunityModel,
   PermissionSetModel,
   SessionModel,
   UserModel,

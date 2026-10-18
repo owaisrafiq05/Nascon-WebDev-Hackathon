@@ -5,7 +5,10 @@ import { pino } from 'pino';
 import request from 'supertest';
 
 import type { ServerConfig } from '../config.js';
+import { ActivityModel } from '../db/models/activity.js';
 import { AuditEventModel } from '../db/models/audit-event.js';
+import { CompanyModel } from '../db/models/company.js';
+import { ContactModel } from '../db/models/contact.js';
 import { InviteModel } from '../db/models/invite.js';
 import { MembershipModel } from '../db/models/membership.js';
 import { OpportunityModel } from '../db/models/opportunity.js';
@@ -45,7 +48,10 @@ export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
 }
 
 const MODELS = [
+  ActivityModel,
   AuditEventModel,
+  CompanyModel,
+  ContactModel,
   InviteModel,
   MembershipModel,
   OpportunityModel,

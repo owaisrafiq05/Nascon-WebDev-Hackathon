@@ -14,6 +14,7 @@ import { loginRateLimiter } from './middleware/rate-limit.js';
 import { requestId } from './middleware/request-id.js';
 import { createAuditRouter } from './routes/audit.js';
 import { createAuthRouter } from './routes/auth.js';
+import { createCrmRouter } from './routes/crm.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMembersRouter } from './routes/members.js';
 import { createOpportunitiesRouter } from './routes/opportunities.js';
@@ -108,6 +109,7 @@ export function createApp({
   );
 
   app.use(API_PREFIX, createAuditRouter());
+  app.use(API_PREFIX, createCrmRouter());
   app.use(API_PREFIX, createMembersRouter(config));
   app.use(API_PREFIX, createPermissionSetsRouter());
   app.use(API_PREFIX, createOpportunitiesRouter());

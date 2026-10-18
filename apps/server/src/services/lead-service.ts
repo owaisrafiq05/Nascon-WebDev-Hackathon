@@ -15,7 +15,6 @@ import mongoose, { type ClientSession, Types } from 'mongoose';
 import { ContactModel, contactDisplayName } from '../db/models/contact.js';
 import { LeadModel, type LeadDoc, type LeadSource } from '../db/models/lead.js';
 import { MembershipModel } from '../db/models/membership.js';
-import { OutboxEventModel, type OutboxEventType } from '../db/models/outbox-event.js';
 import { UserModel } from '../db/models/user.js';
 import {
   DEFAULT_ESCALATION_LEVELS,
@@ -24,6 +23,7 @@ import {
 } from '../db/models/workspace-settings.js';
 import { recordActivity } from '../repositories/activity-repository.js';
 import { appendAuditEvent } from '../repositories/audit-repository.js';
+import { appendOutbox } from '../repositories/outbox.js';
 import { cancelJobsFor, escalationKey, scheduleJob } from '../repositories/job-queue.js';
 import type { Actor } from './crm-service.js';
 import type { AuthContext } from './session-service.js';
@@ -121,18 +121,7 @@ export async function assignmentCandidates(
   }));
 }
 
-async function emitOutbox(
-  workspaceId: Types.ObjectId,
-  type: OutboxEventType,
-  payload: Record<string, unknown>,
-  membershipId: Types.ObjectId | null,
-  session?: ClientSession,
-): Promise<void> {
-  await OutboxEventModel.create(
-    [{ workspaceId, type, payload, membershipId }],
-    session === undefined ? {} : { session, ordered: true },
-  );
-}
+const emitOutbox = appendOutbox;
 
 /** Why a lead could not be placed, in words a manager can act on (F3.7). */
 export function unassignableMessage(reason: UnassignableReason): string {

@@ -55,6 +55,18 @@ export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
     // tests, so a production-like limit would fail whichever test ran last.
     // The limiter's own test builds an app with a low value.
     publicFormRateLimit: { max: 10_000, windowMs: 10 * 60 * 1_000 },
+    outboxRelayIntervalMs: 50,
+    integrations: {
+      encryptionKey: Buffer.alloc(32, 7),
+      publicBaseUrl: 'https://hooks.example.test',
+      webAppUrl: 'http://localhost:5173',
+      google: {
+        clientId: 'test-client-id',
+        clientSecret: 'test-client-secret',
+        redirectUri: 'http://localhost:4000/api/integrations/google/callback',
+      },
+      demo: { twilio: null, stripe: null, telegramBotToken: null },
+    },
     ...overrides,
   };
 }

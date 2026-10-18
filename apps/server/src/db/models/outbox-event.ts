@@ -18,6 +18,10 @@ export const OUTBOX_EVENT_TYPES = [
   'lead.acknowledged',
   'message.received',
   'payment.updated',
+  'message.updated',
+  'appointment.updated',
+  'integration.updated',
+  'availability.changed',
 ] as const;
 
 export type OutboxEventType = (typeof OUTBOX_EVENT_TYPES)[number];
@@ -35,6 +39,8 @@ export interface OutboxEventDoc {
   /** The member this concerns, for the `user:{id}` room. */
   membershipId: Types.ObjectId | null;
   deliveredAt: Date | null;
+  /** The relay's lease, so two API processes never emit the same row at once. */
+  claimedUntil: Date | null;
   createdAt: Date;
 }
 
@@ -45,6 +51,7 @@ const outboxEventSchema = new Schema<OutboxEventDoc>(
     payload: { type: Schema.Types.Mixed, default: () => ({}) },
     membershipId: { type: Schema.Types.ObjectId, ref: 'Membership', default: null },
     deliveredAt: { type: Date, default: null },
+    claimedUntil: { type: Date, default: null },
     createdAt: { type: Date, required: true, default: () => new Date() },
   },
   { timestamps: false, minimize: false },

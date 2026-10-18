@@ -10,13 +10,14 @@ import { loadSession } from './middleware/authenticate.js';
 import { csrfProtection } from './middleware/csrf.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFoundHandler } from './middleware/not-found.js';
-import { loginRateLimiter } from './middleware/rate-limit.js';
+import { loginRateLimiter, publicFormRateLimiter } from './middleware/rate-limit.js';
 import { requestId } from './middleware/request-id.js';
 import { createAuditRouter } from './routes/audit.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createCrmRouter } from './routes/crm.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMembersRouter } from './routes/members.js';
+import { createLeadsRouter } from './routes/leads.js';
 import { createPipelinesRouter } from './routes/pipelines.js';
 import { createSavedListsRouter } from './routes/saved-lists.js';
 import { createPermissionSetsRouter } from './routes/permission-sets.js';
@@ -32,6 +33,8 @@ export interface CreateAppOptions {
    * Production always uses the configured one.
    */
   readonly loginRateLimiterOverride?: RequestHandler;
+  /** Overridden by tests that need to exercise, or bypass, the form limit. */
+  readonly publicFormRateLimiterOverride?: RequestHandler;
 }
 
 /**
@@ -56,6 +59,7 @@ export function createApp({
   logger,
   version,
   loginRateLimiterOverride,
+  publicFormRateLimiterOverride,
 }: CreateAppOptions): Express {
   const app = express();
 
@@ -115,6 +119,12 @@ export function createApp({
   app.use(API_PREFIX, createPermissionSetsRouter());
   app.use(API_PREFIX, createPipelinesRouter());
   app.use(API_PREFIX, createSavedListsRouter());
+  app.use(
+    API_PREFIX,
+    createLeadsRouter({
+      publicFormRateLimiter: publicFormRateLimiterOverride ?? publicFormRateLimiter(config),
+    }),
+  );
 
   app.use(notFoundHandler());
   app.use(errorHandler(logger));

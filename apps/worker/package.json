@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ubmp/domain": "workspace:*",
+    "@ubmp/server": "workspace:*",
     "@ubmp/shared": "workspace:*",
     "mongoose": "^9.11.2",
     "pino": "^10.4.0",

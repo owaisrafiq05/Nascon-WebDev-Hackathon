@@ -35,6 +35,10 @@ const serverEnvSchema = z.object({
 
   /** How long an invitation stays usable before it must be re-sent. */
   INVITE_TTL_HOURS: z.coerce.number().int().min(1).max(8_760).default(168),
+
+  /** Public lead form limiting, per IP (F3.1). */
+  PUBLIC_FORM_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10_000).default(10),
+  PUBLIC_FORM_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().int().min(1).max(1_440).default(10),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -52,6 +56,10 @@ export interface ServerConfig {
   readonly sessionTtlMs: number;
   readonly inviteTtlMs: number;
   readonly loginRateLimit: {
+    readonly max: number;
+    readonly windowMs: number;
+  };
+  readonly publicFormRateLimit: {
     readonly max: number;
     readonly windowMs: number;
   };
@@ -75,6 +83,10 @@ export function loadServerConfig(
     loginRateLimit: {
       max: env.LOGIN_RATE_LIMIT_MAX,
       windowMs: env.LOGIN_RATE_LIMIT_WINDOW_MINUTES * 60 * 1_000,
+    },
+    publicFormRateLimit: {
+      max: env.PUBLIC_FORM_RATE_LIMIT_MAX,
+      windowMs: env.PUBLIC_FORM_RATE_LIMIT_WINDOW_MINUTES * 60 * 1_000,
     },
   };
 }

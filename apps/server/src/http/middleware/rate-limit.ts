@@ -44,3 +44,32 @@ export function loginRateLimiter(config: ServerConfig): RequestHandler {
     },
   });
 }
+
+/**
+ * The public lead form's limit (F3.1).
+ *
+ * Keyed on the IP alone, because a public form has no account to key on. The
+ * window is generous enough for a real person filling in two enquiries and
+ * tight enough that a script cannot flood the pipeline.
+ *
+ * Successful submissions count here, unlike sign-in: the thing being limited is
+ * volume, not guessing.
+ */
+export function publicFormRateLimiter(config: ServerConfig): RequestHandler {
+  return rateLimit({
+    windowMs: config.publicFormRateLimit.windowMs,
+    limit: config.publicFormRateLimit.max,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+    handler: (_req, _res, next) => {
+      next(
+        new AppError(
+          ERROR_CODES.RATE_LIMITED,
+          'Too many submissions from this address. Please try again later.',
+          { hint: 'If this is urgent, telephone us instead.' },
+        ),
+      );
+    },
+  });
+}

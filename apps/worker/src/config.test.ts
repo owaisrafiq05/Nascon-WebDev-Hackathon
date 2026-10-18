@@ -6,8 +6,8 @@ import { loadWorkerConfig } from './config.js';
 const minimal = { MONGODB_URI: 'mongodb://localhost:27017/ubmp' };
 
 describe('loadWorkerConfig', () => {
-  it('defaults the heartbeat interval to 10 seconds', () => {
-    expect(loadWorkerConfig(minimal).heartbeatMs).toBe(10_000);
+  it('defaults the heartbeat interval to 5 seconds', () => {
+    expect(loadWorkerConfig(minimal).heartbeatMs).toBe(5_000);
   });
 
   it('reads the configured interval', () => {

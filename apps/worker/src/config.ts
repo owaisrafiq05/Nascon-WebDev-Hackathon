@@ -10,7 +10,7 @@ const workerEnvSchema = z.object({
   NODE_ENV: nodeEnvSchema,
   LOG_LEVEL: logLevelSchema,
   MONGODB_URI: mongoUriSchema,
-  WORKER_HEARTBEAT_MS: z.coerce.number().int().min(1_000).max(600_000).default(10_000),
+  WORKER_HEARTBEAT_MS: z.coerce.number().int().min(1_000).max(600_000).default(5_000),
 });
 
 export interface WorkerConfig {

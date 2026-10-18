@@ -11,11 +11,16 @@ import { CompanyModel } from '../db/models/company.js';
 import { ContactModel } from '../db/models/contact.js';
 import { CustomFieldDefinitionModel } from '../db/models/custom-field-definition.js';
 import { InviteModel } from '../db/models/invite.js';
+import { LeadFormModel } from '../db/models/lead-form.js';
+import { LeadModel } from '../db/models/lead.js';
 import { MembershipModel } from '../db/models/membership.js';
+import { OutboxEventModel } from '../db/models/outbox-event.js';
 import { OpportunityModel } from '../db/models/opportunity.js';
 import { PermissionSetModel } from '../db/models/permission-set.js';
 import { PipelineModel } from '../db/models/pipeline.js';
+import { ScheduledJobModel } from '../db/models/scheduled-job.js';
 import { SavedListModel } from '../db/models/saved-list.js';
+import { WorkspaceSettingsModel } from '../db/models/workspace-settings.js';
 import { SessionModel } from '../db/models/session.js';
 import { UserModel } from '../db/models/user.js';
 import { WorkspaceModel } from '../db/models/workspace.js';
@@ -46,6 +51,10 @@ export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
     sessionTtlMs: 60 * 60 * 1_000,
     inviteTtlMs: 60 * 60 * 1_000,
     loginRateLimit: { max: 5, windowMs: 15 * 60 * 1_000 },
+    // High by default: the shared test app's limiter keeps its counters across
+    // tests, so a production-like limit would fail whichever test ran last.
+    // The limiter's own test builds an app with a low value.
+    publicFormRateLimit: { max: 10_000, windowMs: 10 * 60 * 1_000 },
     ...overrides,
   };
 }
@@ -57,11 +66,16 @@ const MODELS = [
   ContactModel,
   CustomFieldDefinitionModel,
   InviteModel,
+  LeadFormModel,
+  LeadModel,
   MembershipModel,
+  OutboxEventModel,
   OpportunityModel,
   PermissionSetModel,
   PipelineModel,
   SavedListModel,
+  ScheduledJobModel,
+  WorkspaceSettingsModel,
   SessionModel,
   UserModel,
   WorkspaceModel,

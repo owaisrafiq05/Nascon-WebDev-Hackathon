@@ -383,3 +383,85 @@ announces identically to a screen reader and is ambiguous to a test, so each
 carries `aria-label="Level for <email>"` while the visible text stays short
 (Q8). The Playwright failure that surfaced this was a real accessibility defect,
 not a test-only problem.
+
+---
+
+## P4 — Lead protection
+
+### D43. An acknowledged lead stays with its owner when they go away
+
+F3.6 requires the treatment of already-acknowledged leads to be "defined and
+visible". Unacknowledged leads are reassigned immediately; acknowledged ones are
+**left with their owner** and flagged `ownerUnavailable`.
+
+Reassigning them would discard the context the owner has built with the
+customer: they have already engaged, and handing the conversation to someone
+with no history restarts the relationship. The lead also already has someone
+accountable, which is the property the whole phase protects. The flag makes the
+situation visible on the inbox and the availability board, and a manager can
+still reassign by hand.
+
+### D44. Absence reassignment happens in the same request, not as a job
+
+F3.6 says "immediately". A queued job would run within a tick, which is seconds,
+but it would also mean the employee's own screen could show the leads as still
+theirs after they marked themselves away. Doing it inline means the response
+reports exactly what happened — `reassignedLeadIds` and `flaggedLeadIds` — so
+the interface can say so.
+
+### D45. A lead nobody can take is still captured
+
+When the engine refuses, the lead is created unassigned with the reason
+recorded, rather than the capture being rejected. Refusing would lose the
+enquiry, which is the precise failure Section 1 describes. The recovery queue
+surfaces it and the creator sees the reason in the response.
+
+### D46. The escalation job carries the assignment version it was scheduled for
+
+The idempotency key is `lead.escalate:<leadId>:v<version>:l<level>`. Including
+the version means a _legitimate_ next escalation gets its own key while a
+duplicate schedule for the same state collides and is dropped. The handler also
+re-reads the lead and refuses when the version has moved, so a stale job is a
+no-op even if it reaches the queue by another route.
+
+### D47. Exactly-once rests on two independent mechanisms
+
+- **The lease**, for concurrency: `findOneAndUpdate` matching `runAt <= now`
+  AND (`lockedUntil` absent or past) is a single-document operation, so of two
+  workers issuing it simultaneously exactly one matches. A crashed claimer's
+  lease expires and the job is re-claimed, which is what makes an interrupted
+  escalation still complete.
+- **The conditional update**, for correctness: the ownership change is
+  `updateOne({ _id, version: N })`. Two writers that both decided from version N
+  both attempt it; one matches, the other sees `modifiedCount === 0` and stops.
+
+Either alone would be insufficient. The lease stops two workers running the same
+job; the version check stops two _different_ jobs, or a job and a human action,
+from both moving the same lead.
+
+### D48. A reassigned lead starts a fresh window at level 0
+
+Whether moved by absence handling or by a manager, the new owner gets the full
+acknowledgement window rather than inheriting a clock that has nearly run out.
+Inheriting it would escalate away from someone who had no realistic chance to
+respond. `escalationCount` is left alone, because Section 7 counts manual
+reassignments separately from escalations.
+
+### D49. The worker tick is 5 seconds
+
+It bounds how late an escalation can be. A 30-second demo window with a 10-second
+tick could fire 40 seconds in, which reads as broken; 5 seconds keeps the lag
+under the smallest sensible window. The claim query is indexed on
+`{ status, runAt, lockedUntil }`, so an idle tick is one cheap lookup.
+
+### D50. The honeypot submission is accepted, not refused
+
+A filled `_honey` field answers 202 and discards the lead. Refusing with a 4xx
+would tell a scraper the field is a trap, and it would simply stop filling it.
+
+### D51. The worker imports the job runner from the server package
+
+`apps/server` exports `./jobs`, and the worker calls `runDueJobs`. The
+alternative — duplicating the escalation logic in the worker — would mean two
+implementations of the rule that must not diverge. The dependency direction is
+still one-way: the worker depends on the server, never the reverse.

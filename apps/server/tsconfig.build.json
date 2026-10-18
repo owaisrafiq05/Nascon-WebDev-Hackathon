@@ -2,7 +2,10 @@
   "extends": "@ubmp/config/tsconfig/node-app.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    // The worker imports `@ubmp/server/jobs`, so this app emits declarations
+    // even though it is an application rather than a library.
+    "declaration": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/__tests__/**"]

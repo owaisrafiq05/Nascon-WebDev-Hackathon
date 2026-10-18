@@ -184,6 +184,9 @@ importers:
       '@ubmp/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@ubmp/server':
+        specifier: workspace:*
+        version: link:../server
       '@ubmp/shared':
         specifier: workspace:*
         version: link:../../packages/shared

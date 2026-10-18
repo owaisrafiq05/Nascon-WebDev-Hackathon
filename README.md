@@ -28,15 +28,65 @@ P1.
 git clone <this repo> && cd Nascon-WebDev-Hackathon
 pnpm install                 # 1. dependencies
 cp .env.example .env         # 2. configuration (no secrets needed for P0)
-pnpm db:up                   # 3. MongoDB replica set in Docker
-pnpm check                   # 4. lint, format, typecheck, tests
-pnpm dev                     # 5. web + API + worker
+docker compose up -d         # 3. MongoDB replica set  (alias: pnpm db:up)
+pnpm seed                    # 4. demo data
+pnpm check                   # 5. lint, format, typecheck, tests
+pnpm dev                     # 6. web + API + worker
 ```
 
-Then open <http://localhost:5173>. The page shows the API's health, which
-includes whether the database is connected.
+Then open <http://localhost:5173>. Steps 4 and 5 are optional for P0.
 
-Six commands, and step 4 is optional.
+### Expected output
+
+**Step 3**, `docker compose up -d`:
+
+```
+[+] Running 2/2
+ ✔ Volume "nascon-webdev-hackathon_mongo-data"  Created
+ ✔ Container ubmp-mongo                         Started
+```
+
+The replica set needs no separate init command. The container's healthcheck
+runs `rs.initiate()` on first boot and is idempotent afterwards, so the set
+becomes `PRIMARY` on its own within a few seconds. Confirm with:
+
+```bash
+docker compose ps          # mongo should read (healthy), not (health: starting)
+```
+
+If you would rather initiate it by hand, the equivalent is:
+
+```bash
+docker compose exec mongo mongosh --quiet --eval \
+  "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] })"
+```
+
+**Step 6**, `pnpm dev` — three processes interleave their output:
+
+```
+@ubmp/server dev$ {"level":30,...,"database":"ubmp","msg":"database connected"}
+@ubmp/server dev$ {"level":30,...,"port":4000,"env":"development","msg":"server listening"}
+@ubmp/worker dev$ {"level":30,...,"name":"ubmp-worker","msg":"worker connected"}
+@ubmp/worker dev$ {"level":30,...,"tick":1,"databaseReadyState":1,"msg":"worker heartbeat"}
+@ubmp/web    dev$   ➜  Local:   http://localhost:5173/
+```
+
+The worker then logs one `worker heartbeat` line every 10 seconds.
+
+The page at <http://localhost:5173> shows an **API status** card reading
+“● All systems operational”, with **Database: ● Connected**. Checking the API
+directly gives the same thing:
+
+```console
+$ curl -s http://localhost:4000/api/health
+{"status":"ok","service":"ubmp-server","version":"0.0.0","environment":"development",
+ "uptimeSeconds":21,"timestamp":"2026-10-18T07:20:46.985Z","dependencies":{"database":"up"}}
+```
+
+If MongoDB is not running, the card reads “◐ Running with a degraded
+dependency” with **Database: ○ Not connected**, and the endpoint still answers
+`200` with `"status":"degraded"`. That is deliberate — see
+[decisions D6](docs/decisions.md).
 
 ### What `pnpm dev` starts
 
@@ -62,7 +112,8 @@ one origin and session cookies stay first-party.
 | `pnpm test`      | Vitest in every package                        |
 | `pnpm build`     | Compile packages, apps and the web bundle      |
 | `pnpm format`    | Prettier, writing changes                      |
-| `pnpm db:up`     | Start MongoDB                                  |
+| `pnpm seed`      | Load demo data into the development database   |
+| `pnpm db:up`     | Start MongoDB (`docker compose up -d`)         |
 | `pnpm db:down`   | Stop MongoDB, keeping the data                 |
 | `pnpm db:reset`  | Stop MongoDB and **delete its data**           |
 | `pnpm db:logs`   | Follow the MongoDB log                         |

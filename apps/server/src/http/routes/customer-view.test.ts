@@ -109,6 +109,22 @@ describe('GET /api/contacts/:id/view (F2.8)', () => {
     expect(view.body.opportunities).toEqual([]);
   });
 
+  it('returns the full contact shape the web client parses', async () => {
+    const owner = await signUpOwner(app);
+    const contact = await owner.post('/api/contacts', { firstName: 'Shape' }).expect(201);
+
+    const view = await owner.get(`/api/contacts/${contact.body.id}/view`).expect(200);
+
+    // The same contact fields the contacts list returns, plus a display name.
+    expect(view.body.contact).toMatchObject({
+      companyId: null,
+      ownerMembershipId: contact.body.ownerMembershipId,
+      customFields: {},
+    });
+    // An entry stored with an empty payload still carries one.
+    for (const entry of view.body.activity) expect(entry.payload).toBeTypeOf('object');
+  });
+
   it('includes an opportunity activity entry on the contact timeline', async () => {
     const owner = await signUpOwner(app);
     const contact = await owner.post('/api/contacts', { firstName: 'Ada' }).expect(201);

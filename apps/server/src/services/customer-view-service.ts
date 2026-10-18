@@ -165,13 +165,16 @@ export async function customerView(
   return {
     contact: {
       id: contact._id.toString(),
+      companyId: contact.companyId?.toString() ?? null,
+      ownerMembershipId: contact.ownerMembershipId?.toString() ?? null,
       firstName: contact.firstName,
       lastName: contact.lastName,
       displayName: contactDisplayName(contact),
       email: contact.email,
       phone: contact.phone,
       tags: contact.tags,
-      customFields: contact.customFields,
+      // Mongoose drops empty objects on save, so an untouched map reads back missing.
+      customFields: contact.customFields ?? {},
       optedOutOfMessaging: contact.optedOutOfMessaging,
       lastActivityAt: contact.lastActivityAt?.toISOString() ?? null,
       version: contact.version,
@@ -232,7 +235,7 @@ export async function customerView(
         label: entry.actorLabel,
         membershipId: entry.actorMembershipId?.toString() ?? null,
       },
-      payload: entry.payload,
+      payload: entry.payload ?? {},
       createdAt: entry.createdAt.toISOString(),
     })),
   };

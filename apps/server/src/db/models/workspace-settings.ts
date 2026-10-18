@@ -34,6 +34,9 @@ export interface WorkspaceSettingsDoc {
   /** Where the round-robin left off. A value, not module state (F3.3). */
   roundRobinCursorMembershipId: Types.ObjectId | null;
 
+  /** The currency the dashboard totals in (Section 7: totals are per currency). */
+  currency: string;
+
   version: number;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +75,15 @@ const settingsSchema = new Schema<WorkspaceSettingsDoc>(
     recoveryMinEscalations: { type: Number, required: true, default: 2, min: 1 },
 
     roundRobinCursorMembershipId: { type: Schema.Types.ObjectId, ref: 'Membership', default: null },
+
+    currency: {
+      type: String,
+      required: true,
+      default: 'USD',
+      uppercase: true,
+      minlength: 3,
+      maxlength: 3,
+    },
 
     version: { type: Number, required: true, default: 0 },
   },

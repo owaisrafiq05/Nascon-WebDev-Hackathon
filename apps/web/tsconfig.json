@@ -1,0 +1,7 @@
+{
+  "extends": "@ubmp/config/tsconfig/react-app.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node", "@testing-library/jest-dom"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+}

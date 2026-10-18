@@ -253,3 +253,133 @@ recorded. Values are the stored strings in `subject.verb` form, so the viewer ca
 group by subject; an existing value is never renamed because it is persisted
 data. There is deliberately no `audit.*` event, because nothing may edit or
 delete an audit entry (F4.3) — a test asserts that.
+
+---
+
+## P2 — Accounts, workspaces, roles and audit
+
+### D28. Sign-up uses a transaction, not compensating logic
+
+It creates a user, a workspace, the workspace's default permission sets and an
+Owner membership. Those documents are meaningless apart: a half-finished sign-up
+leaves either an account belonging to no workspace or a workspace with no Owner,
+and nothing in the platform could repair either. MongoDB already runs as a
+replica set, so transactions are available; the tests use `MongoMemoryReplSet`
+for the same reason rather than the standalone server P0 used.
+
+Mongoose 9 requires `ordered: true` for a multi-document `create` inside a
+session, which is what we want anyway: the seed lands whole or not at all.
+
+### D29. There is no session signing secret
+
+Session tokens are 32 random bytes and the database stores only their SHA-256
+digest. A keyed HMAC would add a key to manage and rotate for no gain: the token
+has 256 bits of entropy, so there is nothing to guess, and a database leak yields
+no usable cookie either way. `SESSION_SECRET` was therefore dropped from the
+server's config rather than left unused.
+
+### D30. Permissions are read per request, never carried in the cookie
+
+A signed token holding permissions would be faster, but removing someone's
+access would then take effect only when their token expired. Reading the
+membership and its sets on each request is what makes revocation real, and is the
+reason sessions are server-side at all (Q1).
+
+### D31. Base levels carry administration; permission sets carry everything else
+
+`ASSIGNABLE_PERMISSIONS` deliberately excludes `members.manage`,
+`permissions.manage` and `workspace.manage`. If a set could grant member
+management, an Owner editing a set could hand out the ability to edit sets, and
+the privilege boundary would close on itself. Administration follows the level,
+which only an Owner can change.
+
+An Owner always holds every permission and cannot be reduced, including by
+themselves: they pay for the workspace and must never be able to lock themselves
+out of it.
+
+### D32. The permission matrix is the Owner's alone
+
+An Admin may move people between levels and between existing sets, but not
+redefine what a set grants. Redefining a set is how an Admin would escalate
+their own access, so `change_permissions` requires `owner` regardless of
+`members.manage`.
+
+### D33. A workspace cannot lose its last Owner
+
+Even an Owner cannot demote or remove themselves when they are the only one.
+F1.2 does not say this, but the alternative is a workspace nobody can
+administer, which no support path could fix.
+
+### D34. Another workspace's record answers 404, never 403
+
+A 403 confirms the identifier exists somewhere. A malformed identifier also
+answers 404, so "that is not an id" and "that id is not yours" are
+indistinguishable (F1.6, Q2). `notFound` in `packages/shared` documents this, and
+the tenant-isolation tests assert the code rather than only the status.
+
+### D35. Tenant scoping is a repository factory, not a convention
+
+`scoped(model, { workspaceId })` injects the workspace into every filter and
+every insert. `findById` becomes `findOne({ _id, workspaceId })`, which is what
+turns a guessed id into a 404. `create` applies the scope **last**, so a
+`workspaceId` in a request body cannot redirect the write — tested. CLAUDE.md
+asks for this to be impossible to forget rather than merely remembered.
+
+### D36. Failed sign-in is one response for every cause
+
+Unknown account, wrong password and disabled account share a status, a code and a
+message, and a password is verified even when no user was found so they do not
+differ by timing either. The test asserts the two responses are equal rather than
+merely both 401. Sign-up still reports a duplicate email, because a sign-up form
+reveals that by trying regardless.
+
+### D37. Login rate limiting is keyed on IP and email together
+
+Keying on IP alone lets one colleague's typo lock out a whole office; keying on
+email alone lets an attacker spray from many hosts. Only failures count, so
+signing in repeatedly is not punished. `ipKeyGenerator` collapses IPv6 to its
+prefix, because keying on a bare IPv6 address hands an attacker with a routed
+block a fresh bucket per request.
+
+### D38. CSRF uses a synchroniser token, not a bare double-submit
+
+Double-submit compares a cookie with a header, both controlled by the browser, so
+an attacker able to set cookies on the victim's browser can satisfy it. The
+expected value is held in the session document instead, so it cannot be forged
+from the client side. The check applies only to cookie-authenticated
+state-changing requests: sign-in has no session to protect, and webhooks are
+verified by provider signature.
+
+### D39. Memberships are created on acceptance, not on invitation
+
+A pending invitation is not a member: it must not appear in the member list, must
+not count toward Owner protection and must never receive a lead in P4. Acceptance
+is claimed with a conditional update, so two clicks on one link create one
+membership. Every unusable invitation gives the same message, so tokens cannot be
+probed, and someone who already has an account is not asked for a password —
+an invitation is not a password reset.
+
+### D40. The Opportunity model arrives in P2, minimally
+
+F1.4 requires opportunity _value_ to be masked in lists, on detail pages and in
+exports, which cannot be demonstrated without a record that has a value. P2
+therefore owns a minimal Opportunity with `name`, `value`, `currency`, `stageId`
+and `stageOutcome`. `stageOutcome` is present from the start because the
+open-pipeline-value metric excludes won and lost, and adding it later would mean
+rewriting documents. P3 makes it a real CRM object.
+
+### D41. Playwright does not start the servers
+
+The smoke flow needs a MongoDB replica set, which belongs to the developer's
+environment rather than to a test runner. `playwright.config.ts` therefore has no
+`webServer`: run `pnpm db:up` and `pnpm dev`, then
+`pnpm --filter @ubmp/web e2e`. Starting a database from a test config would
+make the suite depend on Docker and fail confusingly where it is absent.
+
+### D42. Repeated controls get a unique accessible name
+
+The Team page renders one Level select per member. All of them labelled "Level"
+announces identically to a screen reader and is ambiguous to a test, so each
+carries `aria-label="Level for <email>"` while the visible text stays short
+(Q8). The Playwright failure that surfaced this was a real accessibility defect,
+not a test-only problem.

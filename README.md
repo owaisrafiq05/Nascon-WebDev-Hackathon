@@ -10,9 +10,9 @@ Requirements live in [`docs/problem-statement.docx`](docs/problem-statement.docx
 Requirement IDs (`F1.1` … `I5.8`, `Q1` … `Q14`) are the acceptance criteria;
 [`docs/requirements-matrix.md`](docs/requirements-matrix.md) tracks each one.
 
-**Current state: P0, the monorepo scaffold.** The web app, API, worker and
-database are wired together and the checks are green. Business features start at
-P1.
+**Current state: P2 complete.** Sign up, sign in, workspaces, configurable
+roles and permissions, field-level masking and an append-only audit log all work
+end to end. The CRM itself starts at P3.
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ pnpm check                   # 5. lint, format, typecheck, tests
 pnpm dev                     # 6. web + API + worker
 ```
 
-Then open <http://localhost:5173>. Steps 4 and 5 are optional for P0.
+Then open <http://localhost:5173> and create a workspace. Steps 4 and 5 are optional.
 
 ### Expected output
 
@@ -112,6 +112,7 @@ one origin and session cookies stay first-party.
 | `pnpm test`      | Vitest in every package                        |
 | `pnpm build`     | Compile packages, apps and the web bundle      |
 | `pnpm format`    | Prettier, writing changes                      |
+| `pnpm e2e`       | Playwright smoke flows (needs `pnpm dev` up)   |
 | `pnpm seed`      | Load demo data into the development database   |
 | `pnpm db:up`     | Start MongoDB (`docker compose up -d`)         |
 | `pnpm db:down`   | Stop MongoDB, keeping the data                 |
@@ -119,6 +120,22 @@ one origin and session cookies stay first-party.
 | `pnpm db:logs`   | Follow the MongoDB log                         |
 
 Run one package's script with `pnpm --filter @ubmp/<name> <script>`.
+
+### End-to-end tests
+
+The Playwright flows drive a real browser against a running stack, so they are
+not part of `pnpm check`. Start the stack first:
+
+```bash
+pnpm db:up
+pnpm dev                              # leave running
+pnpm --filter @ubmp/web e2e:install   # once, downloads Chromium
+pnpm e2e
+```
+
+They deliberately do not start the servers themselves: the flow needs a MongoDB
+replica set, which belongs to your environment rather than to a test runner
+(see [decisions D41](docs/decisions.md)).
 
 ## Layout
 
@@ -155,7 +172,9 @@ run and caches it.
 ## Configuration
 
 Copy `.env.example` to `.env`. It documents every variable the finished platform
-uses; P0 needs only `MONGODB_URI`, which already has a working default value.
+uses; the server needs only `MONGODB_URI`, which already has a working default
+value. There is deliberately no session secret — see
+[decisions D29](docs/decisions.md).
 
 Both Node processes validate their environment with Zod at startup
 (`apps/server/src/config.ts`, `apps/worker/src/config.ts`) and stop with a

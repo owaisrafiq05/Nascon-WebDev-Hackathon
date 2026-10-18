@@ -87,6 +87,33 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
   readonly body?: unknown;
 }
 
+const CSRF_COOKIE = 'ubmp.csrf';
+const CSRF_HEADER = 'X-CSRF-Token';
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/** Reads a cookie the server published for the page to read. */
+function readCookie(name: string): string | undefined {
+  for (const entry of document.cookie.split(';')) {
+    const [key, ...rest] = entry.trim().split('=');
+    if (key === name) return decodeURIComponent(rest.join('='));
+  }
+  return undefined;
+}
+
+/**
+ * Echoes the session's CSRF token back on state-changing requests (Q3).
+ *
+ * The server publishes it in a readable cookie and compares the header against
+ * the copy held in the session document, so the page must send it explicitly;
+ * the cookie travelling on its own proves nothing.
+ */
+function csrfHeader(method: string | undefined): Record<string, string> {
+  if (SAFE_METHODS.has((method ?? 'GET').toUpperCase())) return {};
+
+  const token = readCookie(CSRF_COOKIE);
+  return token === undefined ? {} : { [CSRF_HEADER]: token };
+}
+
 export async function apiRequest<TSchema extends z.ZodType>(
   path: string,
   schema: TSchema,
@@ -102,6 +129,7 @@ export async function apiRequest<TSchema extends z.ZodType>(
       headers: {
         Accept: 'application/json',
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...csrfHeader(rest.method),
         ...headers,
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),

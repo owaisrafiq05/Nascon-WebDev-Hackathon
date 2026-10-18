@@ -26,7 +26,8 @@
     "db:reset": "docker compose down -v && docker compose up -d",
     "db:logs": "docker compose logs -f mongo",
     "clean": "pnpm -r exec rm -rf dist coverage .vite *.tsbuildinfo",
-    "seed": "pnpm --filter @ubmp/server seed"
+    "seed": "pnpm --filter @ubmp/server seed",
+    "e2e": "pnpm --filter @ubmp/web e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -111,3 +111,100 @@ exposes a typed object, so a missing variable stops the process with a readable
 message instead of surfacing later as `undefined` (Q13). Variable _values_ never
 appear in a validation error, because the environment holds signing secrets
 (I5.3).
+
+## The auth model (P2)
+
+### Identity, workspace, membership
+
+A **user** is a person and is global: one account, one email, one password. A
+**workspace** is one company's isolated environment. A **membership** joins the
+two and is the unit of authorisation — it carries the base level and the
+permission sets. The same person can be an Owner of one workspace and a User in
+another, and a session is always bound to one membership, never to a user alone.
+
+### Permissions are configuration, not role names
+
+Three base levels are fixed: Owner, Admin, User (F1.2). Everything else is a
+**permission set** stored per workspace — the role-like configuration of F1.3.
+A "Manager" is a seeded permission set, not a fourth level, which is what
+Section 2 asks for.
+
+Code asks `hasPermission(permissions, 'crm.record.delete')` and never
+`baseLevel === 'admin'`. The split between the two:
+
+- **Base levels carry workspace administration** (`members.manage`,
+  `workspace.manage`). `ASSIGNABLE_PERMISSIONS` excludes these, so a workspace
+  cannot define a set that hands out member management.
+- **Permission sets carry everything else.** A User holds nothing by level;
+  everything they can do was granted.
+- **An Owner always holds every permission** and cannot be reduced, so they can
+  never lock themselves out of a workspace they pay for.
+
+`effectivePermissions` is the union of level, sets and per-member grants. It
+drops stored strings the codebase no longer knows, so a removed permission
+cannot keep granting access through a stale set.
+
+### Sessions
+
+```
+  cookie  ubmp.sid   32 random bytes, httpOnly, SameSite=Lax, Secure in prod
+  stored  sessions   SHA-256(token) only — never the token itself
+```
+
+Server-side, in MongoDB, because that is what makes revocation real. Permissions
+are re-read from the database on **every request** rather than baked into the
+cookie, so removing someone's access takes effect on their next request instead
+of whenever a token happens to expire. Signing out, removing a membership and
+changing a level all revoke sessions.
+
+There is no session signing secret. A 256-bit random token has nothing to guess,
+so a plain digest is sufficient and there is no key to rotate or leak.
+
+### CSRF
+
+A **synchroniser token**, not a bare double-submit. The expected value lives in
+the session document; the server publishes it in a readable `ubmp.csrf` cookie
+and the page echoes it in `X-CSRF-Token`. An attacker who can set cookies on the
+victim's browser still cannot make the header agree with the server's copy.
+
+It applies only when a session cookie authenticated the request, so sign-in and
+sign-up are reachable, and provider webhooks are verified by provider signature
+instead (I1.2, I2.3).
+
+### Where enforcement happens
+
+```
+  route middleware   requireSession() -> requirePermission(...)
+  service            canManageMembership(...) again, for membership changes
+  repository         scoped(model, { workspaceId }) injects the tenant
+```
+
+Three layers on purpose. The middleware is the common path; the service check
+means a future endpoint cannot reach a membership without the Admin-cannot-touch-
+Owner rule; the scoped repository means a query cannot omit `workspaceId` at all.
+`workspaceId` always comes from the session.
+
+A record belonging to another workspace answers **404, never 403**, because a 403
+would confirm the identifier exists. A malformed identifier answers 404 too, so
+"not an id" and "not yours" cannot be told apart (F1.6, Q2).
+
+### Field-level masking
+
+`opportunity.value.view` is a permission of its own (F1.4). The rule is one
+function in `packages/domain/src/masking.ts`, applied on all three read paths the
+requirement names — list, detail and export. The export writes its value cell
+through `opportunityValueExportCell` rather than reading `record.value`, so a CSV
+writer cannot bypass it. Masking nulls the value and sets `valueMasked`, so a
+reader can tell "no value recorded" from "you may not see this".
+
+Metrics never mask: who may see a figure is answered before the metric is called.
+A metric returning zero for an unpermitted user would make the same figure differ
+between screens, which Q12 forbids.
+
+### Audit
+
+Append-only, guarded three times over (F4.3): the repository exports no mutating
+method, the router mounts only GET routes, and the schema rejects every
+non-insert write. Each entry is appended inside the same transaction as the
+change it describes, so a change cannot commit unaudited and an entry cannot
+survive a rollback.

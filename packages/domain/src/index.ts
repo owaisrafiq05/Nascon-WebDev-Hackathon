@@ -1,7 +1,15 @@
 /**
  * Pure business rules. This package must never import a database driver, an HTTP
  * framework or a provider SDK, so every rule here is testable in isolation (Q14).
+ *
+ *   assignment    round-robin lead assignment              (F3.3)
+ *   availability  the "available employee" definition       (F3.2, Section 7)
+ *   escalation    acknowledgement and escalation states     (F3.4, F3.5, F3.8)
+ *   metrics       one function per Section 7 definition     (F5.2, I2.6, Q12)
+ *   audit-events  the audit log's event vocabulary          (F4.1)
  */
 export * from './assignment.js';
+export * from './audit-events.js';
 export * from './availability.js';
 export * from './escalation.js';
+export * from './metrics.js';

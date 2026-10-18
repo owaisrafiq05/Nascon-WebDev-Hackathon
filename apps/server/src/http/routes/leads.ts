@@ -1,4 +1,4 @@
-import { AVAILABILITY_STATUSES, PERMISSIONS } from '@ubmp/domain';
+import { AUDIT_EVENT_TYPES, AVAILABILITY_STATUSES, PERMISSIONS } from '@ubmp/domain';
 import { paginationQuerySchema } from '@ubmp/shared';
 import { Router, type RequestHandler } from 'express';
 import { Types } from 'mongoose';
@@ -10,7 +10,10 @@ import { MembershipModel } from '../../db/models/membership.js';
 import {
   DEFAULT_ESCALATION_LEVELS,
   WorkspaceSettingsModel,
+  type WorkspaceSettingsDoc,
 } from '../../db/models/workspace-settings.js';
+import { appendAuditEvent } from '../../repositories/audit-repository.js';
+import { appendOutbox } from '../../repositories/outbox.js';
 import { RECOVERY_REASON_LABELS, recoveryQueueFor } from '../../services/recovery-service.js';
 import { actorFor } from '../../services/crm-service.js';
 import {
@@ -64,11 +67,28 @@ function leadView(lead: LeadDoc, deadline: number | null) {
     ownerUnavailable: lead.ownerUnavailable,
     assignedAt: lead.assignedAt?.toISOString() ?? null,
     acknowledgedAt: lead.acknowledgedAt?.toISOString() ?? null,
+    firstAcknowledgedAt: lead.firstAcknowledgedAt?.toISOString() ?? null,
     lastActivityAt: lead.lastActivityAt?.toISOString() ?? null,
     /** The countdown target the inbox renders (F3.4). */
     acknowledgementDeadline: deadline === null ? null : new Date(deadline).toISOString(),
     version: lead.version,
     createdAt: lead.createdAt.toISOString(),
+  };
+}
+
+/** The configurable part of the settings, for the audit before/after (F4.1). */
+function rulesSnapshot(settings: WorkspaceSettingsDoc): Record<string, unknown> {
+  return {
+    maxOpenLeadsPerEmployee: settings.maxOpenLeadsPerEmployee,
+    acknowledgementWindowSeconds: settings.acknowledgementWindowSeconds,
+    escalationLevels: settings.escalationLevels.map((level) => ({
+      target: level.target,
+      windowSeconds: level.windowSeconds,
+    })),
+    backupMembershipId: settings.backupMembershipId?.toString() ?? null,
+    managerMembershipId: settings.managerMembershipId?.toString() ?? null,
+    idleRecoveryMinutes: settings.idleRecoveryMinutes,
+    recoveryMinEscalations: settings.recoveryMinEscalations,
   };
 }
 
@@ -260,7 +280,10 @@ export function createLeadsRouter({ publicFormRateLimiter }: LeadsRouterOptions)
       const query = z
         .object({
           mine: z.enum(['true', 'false']).optional(),
-          status: z.enum(['open', 'converted', 'closed']).optional(),
+          status: z.enum(['open', 'converted', 'closed', 'all']).optional(),
+          // The dashboard's drill-down reproduces its "new leads" figure (F5.3).
+          createdFrom: z.string().datetime({ offset: true }).optional(),
+          createdTo: z.string().datetime({ offset: true }).optional(),
         })
         .parse(req.query);
 
@@ -268,10 +291,14 @@ export function createLeadsRouter({ publicFormRateLimiter }: LeadsRouterOptions)
       const settings = await settingsFor(auth.workspaceId);
       const config = escalationConfigFrom(settings);
 
-      const filter: Record<string, unknown> = {
-        workspaceId: auth.workspaceId,
-        status: query.status ?? 'open',
-      };
+      const filter: Record<string, unknown> = { workspaceId: auth.workspaceId };
+      if (query.status !== 'all') filter['status'] = query.status ?? 'open';
+      if (query.createdFrom !== undefined || query.createdTo !== undefined) {
+        filter['createdAt'] = {
+          ...(query.createdFrom === undefined ? {} : { $gte: new Date(query.createdFrom) }),
+          ...(query.createdTo === undefined ? {} : { $lt: new Date(query.createdTo) }),
+        };
+      }
 
       // A member without member management only ever sees their own leads, so
       // the inbox cannot be used to read the whole workspace (F1.5).
@@ -414,6 +441,7 @@ export function createLeadsRouter({ publicFormRateLimiter }: LeadsRouterOptions)
     }
 
     const result = await setAvailability(auth, membershipId, status, await actorFor(auth));
+    await appendOutbox(auth.workspaceId, 'availability.changed', { membershipId });
 
     // Reported, so the employee sees what happened to their leads (F3.6).
     res.status(200).json(result);
@@ -471,7 +499,7 @@ export function createLeadsRouter({ publicFormRateLimiter }: LeadsRouterOptions)
         .parse(req.body);
 
       const auth = authOf(req);
-      await settingsFor(auth.workspaceId);
+      const before = await settingsFor(auth.workspaceId);
 
       await WorkspaceSettingsModel.updateOne(
         { workspaceId: auth.workspaceId },
@@ -514,6 +542,20 @@ export function createLeadsRouter({ publicFormRateLimiter }: LeadsRouterOptions)
       );
 
       const settings = await settingsFor(auth.workspaceId);
+      const actor = await actorFor(auth);
+      await appendAuditEvent({
+        workspaceId: auth.workspaceId,
+        type: AUDIT_EVENT_TYPES.ASSIGNMENT_RULES_UPDATED,
+        actor: {
+          kind: 'user',
+          userId: actor.userId,
+          membershipId: actor.membershipId,
+          label: actor.label,
+        },
+        target: { kind: 'assignment_rules', label: 'Assignment and escalation rules' },
+        before: rulesSnapshot(before),
+        after: rulesSnapshot(settings),
+      });
       res.status(200).json({
         acknowledgementWindowSeconds: settings.acknowledgementWindowSeconds,
         maxOpenLeadsPerEmployee: settings.maxOpenLeadsPerEmployee,

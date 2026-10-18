@@ -80,10 +80,10 @@ describe('GET /api/contacts/:id/view (F2.8)', () => {
     // Its history.
     expect(view.body.activity.length).toBeGreaterThan(0);
 
-    // And the three sections that are not connected yet.
-    expect(view.body.conversations).toMatchObject({ items: [], availableFrom: 'P7' });
-    expect(view.body.payments).toMatchObject({ items: [], availableFrom: 'P8' });
-    expect(view.body.appointments).toMatchObject({ items: [], availableFrom: 'P9' });
+    // And the three integration-fed sections, empty for a new contact.
+    expect(view.body.conversations).toMatchObject({ items: [], availableFrom: null });
+    expect(view.body.payments).toMatchObject({ items: [], availableFrom: null });
+    expect(view.body.appointments).toMatchObject({ items: [], availableFrom: null });
   });
 
   it('explains why a section is empty rather than omitting it', async () => {
@@ -92,11 +92,11 @@ describe('GET /api/contacts/:id/view (F2.8)', () => {
 
     const view = await owner.get(`/api/contacts/${contact.body.id}/view`).expect(200);
 
-    // The page can say "not connected yet" instead of rendering a section that
+    // The page can say why a section is empty instead of rendering one that
     // looks broken (Q10).
-    expect(view.body.conversations.reason).toBe('Messaging is not connected yet.');
-    expect(view.body.payments.reason).toBe('Payments are not connected yet.');
-    expect(view.body.appointments.reason).toBe('The calendar is not connected yet.');
+    expect(view.body.conversations.reason).toBe('No conversations with this contact yet.');
+    expect(view.body.payments.reason).toBe('No payment requests for this contact yet.');
+    expect(view.body.appointments.reason).toBe('No appointments with this contact yet.');
   });
 
   it('handles a contact with no company and no opportunities', async () => {

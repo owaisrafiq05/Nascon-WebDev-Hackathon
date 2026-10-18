@@ -8,7 +8,13 @@ import { MembershipModel } from '../db/models/membership.js';
 import { OpportunityModel } from '../db/models/opportunity.js';
 import { PipelineModel } from '../db/models/pipeline.js';
 import { UserModel } from '../db/models/user.js';
+import { AppointmentModel } from '../db/models/appointment.js';
+import { ConversationModel } from '../db/models/conversation.js';
+import { PaymentModel } from '../db/models/payment.js';
 import { queryActivity } from '../repositories/activity-repository.js';
+import { appointmentViews } from './calendar-service.js';
+import { canSeeAllConversations, conversationViews } from './messaging-service.js';
+import { paymentViews } from './payment-service.js';
 import type { AuthContext } from './session-service.js';
 
 /**
@@ -19,38 +25,25 @@ import type { AuthContext } from './session-service.js';
  * Assembled in one place, and in one round of parallel queries, so the page is
  * a single request rather than six that each have to re-check the workspace.
  *
- * Conversations, payments and appointments are **declared but empty** until
- * P7, P8 and P9 connect their providers. Each section carries an
- * `availableFrom` marker rather than being omitted, so the page can say "not
- * connected yet" instead of rendering a section that looks broken, and the
- * response shape does not change when the provider arrives (Q10).
+ * Conversations, payments and appointments come from the messaging, payment
+ * and calendar integrations; an empty section carries a `reason` the page
+ * shows instead of a blank area (Q10).
  */
 
-/** What a section of the page is waiting on, when it is not live yet. */
-export interface PendingSection {
-  readonly items: readonly never[];
-  /** The phase that fills this in, for the interface's explanation. */
-  readonly availableFrom: string;
-  readonly reason: string;
+/** A section of the page fed by an integration (I1, I2, I3). */
+export interface IntegrationSection {
+  readonly items: readonly Record<string, unknown>[];
+  /** Kept for the response shape; integrations are live, so always null. */
+  readonly availableFrom: null;
+  readonly reason: string | null;
 }
 
-const CONVERSATIONS_PENDING: PendingSection = {
-  items: [],
-  availableFrom: 'P7',
-  reason: 'Messaging is not connected yet.',
-};
-
-const PAYMENTS_PENDING: PendingSection = {
-  items: [],
-  availableFrom: 'P8',
-  reason: 'Payments are not connected yet.',
-};
-
-const APPOINTMENTS_PENDING: PendingSection = {
-  items: [],
-  availableFrom: 'P9',
-  reason: 'The calendar is not connected yet.',
-};
+function section(
+  items: readonly Record<string, unknown>[],
+  emptyReason: string,
+): IntegrationSection {
+  return { items, availableFrom: null, reason: items.length === 0 ? emptyReason : null };
+}
 
 export interface CustomerView {
   readonly contact: Record<string, unknown>;
@@ -62,9 +55,9 @@ export interface CustomerView {
     readonly availabilityStatus: string;
   } | null;
   readonly opportunities: readonly Record<string, unknown>[];
-  readonly conversations: PendingSection;
-  readonly payments: PendingSection;
-  readonly appointments: PendingSection;
+  readonly conversations: IntegrationSection;
+  readonly payments: IntegrationSection;
+  readonly appointments: IntegrationSection;
   readonly activity: readonly Record<string, unknown>[];
 }
 
@@ -90,28 +83,51 @@ export async function customerView(
   // empty sections that reads like a real but inactive contact (F1.6).
   if (contact === null) throw notFound('That contact does not exist.');
 
-  const [company, opportunities, membership, activity] = await Promise.all([
-    contact.companyId === null
-      ? Promise.resolve(null)
-      : CompanyModel.findOne({ _id: contact.companyId, workspaceId: auth.workspaceId }).lean(),
+  const conversationFilter: Record<string, unknown> = {
+    workspaceId: auth.workspaceId,
+    contactId,
+    // The same visibility rule as the conversations list (I1.6).
+    ...(canSeeAllConversations(auth) ? {} : { assigneeMembershipId: auth.membershipId }),
+  };
 
-    OpportunityModel.find({ workspaceId: auth.workspaceId, contactId })
-      .sort({ createdAt: -1 })
-      .lean(),
+  const [company, opportunities, membership, activity, conversations, payments, appointments] =
+    await Promise.all([
+      contact.companyId === null
+        ? Promise.resolve(null)
+        : CompanyModel.findOne({ _id: contact.companyId, workspaceId: auth.workspaceId }).lean(),
 
-    contact.ownerMembershipId === null
-      ? Promise.resolve(null)
-      : MembershipModel.findOne({
-          _id: contact.ownerMembershipId,
-          workspaceId: auth.workspaceId,
-        }).lean(),
+      OpportunityModel.find({ workspaceId: auth.workspaceId, contactId })
+        .sort({ createdAt: -1 })
+        .lean(),
 
-    // The contact's timeline includes its opportunities' entries, which is what
-    // makes this a complete history rather than only the contact's own edits.
-    queryActivity(
-      { workspaceId: auth.workspaceId, targetKind: 'contact', targetId: contactId },
-      { page: 1, limit: activityLimit },
-    ),
+      contact.ownerMembershipId === null
+        ? Promise.resolve(null)
+        : MembershipModel.findOne({
+            _id: contact.ownerMembershipId,
+            workspaceId: auth.workspaceId,
+          }).lean(),
+
+      // The contact's timeline includes its opportunities' entries, which is what
+      // makes this a complete history rather than only the contact's own edits.
+      queryActivity(
+        { workspaceId: auth.workspaceId, targetKind: 'contact', targetId: contactId },
+        { page: 1, limit: activityLimit },
+      ),
+      ConversationModel.find(conversationFilter).sort({ lastMessageAt: -1 }).limit(20).lean(),
+      PaymentModel.find({ workspaceId: auth.workspaceId, contactId })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean(),
+      AppointmentModel.find({ workspaceId: auth.workspaceId, contactId })
+        .sort({ startsAt: -1 })
+        .limit(50)
+        .lean(),
+    ]);
+
+  const [conversationItems, paymentItems, appointmentItems] = await Promise.all([
+    conversationViews(auth.workspaceId, conversations),
+    paymentViews(auth.workspaceId, payments),
+    appointmentViews(auth.workspaceId, appointments),
   ]);
 
   const assignedUser =
@@ -202,9 +218,9 @@ export async function customerView(
       permissions,
     ) as unknown as readonly Record<string, unknown>[],
 
-    conversations: CONVERSATIONS_PENDING,
-    payments: PAYMENTS_PENDING,
-    appointments: APPOINTMENTS_PENDING,
+    conversations: section(conversationItems, 'No conversations with this contact yet.'),
+    payments: section(paymentItems, 'No payment requests for this contact yet.'),
+    appointments: section(appointmentItems, 'No appointments with this contact yet.'),
 
     activity: activity.items.map((entry) => ({
       id: entry._id.toString(),

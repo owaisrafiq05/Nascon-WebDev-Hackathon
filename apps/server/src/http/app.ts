@@ -14,6 +14,12 @@ import { loginRateLimiter, publicFormRateLimiter } from './middleware/rate-limit
 import { requestId } from './middleware/request-id.js';
 import { createAuditRouter } from './routes/audit.js';
 import { createAuthRouter } from './routes/auth.js';
+import { createCalendarRouter } from './routes/calendar.js';
+import { createDashboardRouter } from './routes/dashboard.js';
+import { createIntegrationsRouter } from './routes/integrations.js';
+import { createMessagingRouter } from './routes/messaging.js';
+import { createPaymentsRouter } from './routes/payments.js';
+import { createWebhooksRouter } from './routes/webhooks.js';
 import { createCrmRouter } from './routes/crm.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMembersRouter } from './routes/members.js';
@@ -90,6 +96,11 @@ export function createApp({
   );
 
   app.use(cookieParser());
+
+  // Provider webhooks read the raw body for signature verification, so they
+  // are mounted before any parser touches it (I1.2, I2.3).
+  app.use(API_PREFIX, createWebhooksRouter(config.integrations, logger));
+
   app.use(express.json({ limit: config.jsonBodyLimit }));
   app.use(express.urlencoded({ extended: false, limit: config.jsonBodyLimit }));
 
@@ -125,6 +136,12 @@ export function createApp({
       publicFormRateLimiter: publicFormRateLimiterOverride ?? publicFormRateLimiter(config),
     }),
   );
+
+  app.use(API_PREFIX, createDashboardRouter());
+  app.use(API_PREFIX, createIntegrationsRouter(config.integrations));
+  app.use(API_PREFIX, createCalendarRouter(config.integrations));
+  app.use(API_PREFIX, createMessagingRouter(config.integrations));
+  app.use(API_PREFIX, createPaymentsRouter(config.integrations));
 
   app.use(notFoundHandler());
   app.use(errorHandler(logger));

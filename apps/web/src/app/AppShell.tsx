@@ -16,6 +16,8 @@ export function AppShell() {
 
   const permissions = session.data?.membership.permissions ?? [];
   const canSeeAudit = permissions.includes(PERMISSIONS.AUDIT_LOG_VIEW);
+  const canSeeCrm = permissions.includes(PERMISSIONS.CRM_VIEW);
+  const canConfigure = permissions.includes(PERMISSIONS.ASSIGNMENT_RULES_MANAGE);
 
   const linkClass = ({ isActive }: { isActive: boolean }): string =>
     `rounded-md px-3 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:focus-visible:ring-slate-100 ${
@@ -49,6 +51,24 @@ export function AppShell() {
             <NavLink to="/" end className={linkClass}>
               Overview
             </NavLink>
+            {canSeeCrm && (
+              <>
+                <NavLink to="/contacts" className={linkClass}>
+                  Contacts
+                </NavLink>
+                <NavLink to="/pipeline" className={linkClass}>
+                  Pipeline
+                </NavLink>
+                <NavLink to="/lists" className={linkClass}>
+                  Lists
+                </NavLink>
+              </>
+            )}
+            {canConfigure && (
+              <NavLink to="/configuration" className={linkClass}>
+                Configuration
+              </NavLink>
+            )}
             <NavLink to="/team" className={linkClass}>
               Team
             </NavLink>

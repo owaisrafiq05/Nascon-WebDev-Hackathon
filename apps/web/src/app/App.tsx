@@ -1,4 +1,4 @@
-import type { Permission } from '@ubmp/domain';
+import { PERMISSIONS, type Permission } from '@ubmp/domain';
 import type { ReactElement } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -7,6 +7,12 @@ import { SignInPage } from '../features/auth/SignInPage.js';
 import { SignUpPage } from '../features/auth/SignUpPage.js';
 import { useSession } from '../features/auth/session.js';
 import { AUDIT_PERMISSION, AuditPage } from '../features/audit/AuditPage.js';
+import { ContactDetailPage } from '../features/crm/ContactDetailPage.js';
+import { ContactsPage } from '../features/crm/ContactsPage.js';
+import { CrmAdminPage } from '../features/crm/CrmAdminPage.js';
+import { ListsPage } from '../features/crm/ListsPage.js';
+import { OpportunityDetailPage } from '../features/crm/OpportunityDetailPage.js';
+import { PipelinePage } from '../features/crm/PipelinePage.js';
 import { TeamPage } from '../features/team/TeamPage.js';
 import { HomePage } from '../pages/HomePage.js';
 import { AppShell } from './AppShell.js';
@@ -99,6 +105,54 @@ export function App() {
           }
         >
           <Route path="/" element={<HomePage />} />
+
+          {/* The CRM. Each page needs crm.record.view; the server enforces it
+              too, so these guards are presentation only (F1.5). */}
+          <Route
+            path="/contacts"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <ContactsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/contacts/:contactId"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <ContactDetailPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/pipeline"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <PipelinePage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/opportunities/:opportunityId"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <OpportunityDetailPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/lists"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <ListsPage />
+              </RequirePermission>
+            }
+          />
+          {/* Configuration is rendered for anyone signed in and explains itself
+              to a member who lacks the permission, rather than redirecting away
+              from a page they were told to open. */}
+          <Route path="/configuration" element={<CrmAdminPage />} />
+
           <Route path="/team" element={<TeamPage />} />
           <Route
             path="/audit"

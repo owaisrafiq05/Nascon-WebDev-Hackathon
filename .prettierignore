@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build/
+coverage/
+pnpm-lock.yaml
+docs/problem-statement.md
+docs/problem-statement.docx

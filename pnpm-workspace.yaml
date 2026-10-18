@@ -1,0 +1,22 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Workspace packages are linked by pnpm instead of being fetched from the registry.
+linkWorkspacePackages: true
+# Peer ranges are reported but do not abort the install.
+strictPeerDependencies: false
+autoInstallPeers: true
+
+# pnpm blocks dependency install scripts by default. These two need one:
+#   esbuild               fetches its platform binary
+#   mongodb-memory-server fetches the mongod used by the server's database tests
+# Anything not listed here cannot run a script at install time.
+allowBuilds:
+  esbuild: true
+  mongodb-memory-server: true
+
+# Held back by pnpm's minimum-release-age supply-chain gate and reviewed in.
+minimumReleaseAgeExclude:
+  - '@tanstack/query-core@5.104.4'
+  - '@tanstack/react-query@5.104.4'

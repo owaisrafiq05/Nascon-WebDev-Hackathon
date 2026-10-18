@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Secrets: only .env.example is ever committed.
+.env
+.env.*
+!.env.example
+
+# Test and tool output
+playwright-report/
+test-results/
+.mongodb-binaries/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

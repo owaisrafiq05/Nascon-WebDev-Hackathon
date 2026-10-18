@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * P3's smoke flow, driven entirely through the interface.
@@ -14,7 +14,7 @@ function uniqueEmail(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}@example.com`;
 }
 
-async function signUp(page: import('@playwright/test').Page, company: string): Promise<void> {
+async function signUp(page: Page, company: string): Promise<void> {
   await page.goto('/sign-up');
   await page.getByLabel('Your name').fill('CRM Owner');
   await page.getByLabel('Company name').fill(company);

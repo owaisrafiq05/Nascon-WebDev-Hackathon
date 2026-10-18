@@ -6,6 +6,14 @@ import request from 'supertest';
 
 import type { ServerConfig } from '../config.js';
 import { ActivityModel } from '../db/models/activity.js';
+import { AppointmentModel } from '../db/models/appointment.js';
+import { CalendarConnectionModel } from '../db/models/calendar-connection.js';
+import { ConversationModel } from '../db/models/conversation.js';
+import { IntegrationEventModel } from '../db/models/integration-event.js';
+import { IntegrationModel } from '../db/models/integration.js';
+import { MessageModel } from '../db/models/message.js';
+import { NotificationModel } from '../db/models/notification.js';
+import { PaymentModel } from '../db/models/payment.js';
 import { AuditEventModel } from '../db/models/audit-event.js';
 import { CompanyModel } from '../db/models/company.js';
 import { ContactModel } from '../db/models/contact.js';
@@ -73,6 +81,14 @@ export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
 
 const MODELS = [
   ActivityModel,
+  AppointmentModel,
+  CalendarConnectionModel,
+  ConversationModel,
+  IntegrationEventModel,
+  IntegrationModel,
+  MessageModel,
+  NotificationModel,
+  PaymentModel,
   AuditEventModel,
   CompanyModel,
   ContactModel,

@@ -14,6 +14,7 @@ import { Types } from 'mongoose';
 import { z } from 'zod';
 
 import { OpportunityModel, type OpportunityDoc } from '../../db/models/opportunity.js';
+import { queryActivity } from '../../repositories/activity-repository.js';
 import type { PipelineDoc } from '../../db/models/pipeline.js';
 import { actorFor } from '../../services/crm-service.js';
 import {
@@ -511,6 +512,41 @@ export function createPipelinesRouter(): Router {
       );
 
       res.status(200).json(maskOpportunityValue(opportunityView(opportunity), auth.permissions));
+    },
+  );
+
+  /** An opportunity's own timeline (F2.7). */
+  router.get(
+    '/opportunities/:opportunityId/activity',
+    requireSession(),
+    requirePermission(PERMISSIONS.CRM_VIEW),
+    async (req, res) => {
+      const pagination = paginationQuerySchema.parse(req.query);
+      const auth = authOf(req);
+
+      // Read first, so another workspace's id is a 404 rather than an empty
+      // timeline that reads like a record with no history (F1.6).
+      const opportunity = await findOpportunity(auth, requireParam(req, 'opportunityId'));
+
+      const page = await queryActivity(
+        { workspaceId: auth.workspaceId, targetKind: 'opportunity', targetId: opportunity._id },
+        pagination,
+      );
+
+      res.status(200).json({
+        items: page.items.map((entry) => ({
+          id: entry._id.toString(),
+          type: entry.type,
+          summary: entry.summary,
+          actor: {
+            label: entry.actorLabel,
+            membershipId: entry.actorMembershipId?.toString() ?? null,
+          },
+          payload: entry.payload,
+          createdAt: entry.createdAt.toISOString(),
+        })),
+        pageInfo: page.pageInfo,
+      });
     },
   );
 

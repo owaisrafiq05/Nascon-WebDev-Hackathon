@@ -7,7 +7,8 @@ import { z } from 'zod';
 import { CompanyModel, type CompanyDoc } from '../../db/models/company.js';
 import { ContactModel, type ContactDoc } from '../../db/models/contact.js';
 import { OpportunityModel } from '../../db/models/opportunity.js';
-import { queryActivity } from '../../repositories/activity-repository.js';
+import { queryActivity, recordActivity } from '../../repositories/activity-repository.js';
+import { customerView } from '../../services/customer-view-service.js';
 import {
   actorFor,
   createCompany,
@@ -298,6 +299,61 @@ export function createCrmRouter(): Router {
       );
 
       res.status(204).send();
+    },
+  );
+
+  /**
+   * The complete customer view (F2.8). One request assembles the contact, its
+   * company, its opportunities, the assigned employee, the activity history and
+   * the sections P7 to P9 will fill in.
+   */
+  router.get(
+    '/contacts/:contactId/view',
+    requireSession(),
+    requirePermission(PERMISSIONS.CRM_VIEW),
+    async (req, res) => {
+      const auth = authOf(req);
+      const contact = await findContact(auth, requireParam(req, 'contactId'));
+
+      const view = await customerView(auth, contact._id, auth.permissions);
+
+      res.status(200).json(view);
+    },
+  );
+
+  /** A note added to a contact or an opportunity, which is an activity (F2.7). */
+  router.post(
+    '/contacts/:contactId/notes',
+    requireSession(),
+    requirePermission(PERMISSIONS.CRM_EDIT),
+    async (req, res) => {
+      const { body } = z
+        .object({ body: z.string().trim().min(1, 'is required').max(5_000) })
+        .parse(req.body);
+
+      const auth = authOf(req);
+      const contact = await findContact(auth, requireParam(req, 'contactId'));
+      const actor = await actorFor(auth);
+
+      await recordActivity({
+        workspaceId: auth.workspaceId,
+        type: 'note.added',
+        targetKind: 'contact',
+        targetId: contact._id,
+        contactId: contact._id,
+        actor,
+        summary: body.length > 120 ? `${body.slice(0, 117)}...` : body,
+        payload: { body },
+      });
+
+      // A note is a recorded action, which is what "acknowledged" means for a
+      // lead in Section 7, so the contact's activity clock moves with it.
+      await ContactModel.updateOne(
+        { _id: contact._id, workspaceId: auth.workspaceId },
+        { $set: { lastActivityAt: new Date() } },
+      );
+
+      res.status(201).json({ recorded: true });
     },
   );
 

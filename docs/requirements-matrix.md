@@ -1,75 +1,82 @@
 # Requirements matrix
 
-Tracks every requirement ID from `problem-statement.docx` against the phase that
-delivers it and the code that does. Updated at the end of each phase.
+Tracks every requirement ID from `problem-statement.docx` against the code that
+delivers it. Status: **done** · **partial** (with reason) · **not started**.
 
-Status: **done** · **partial** (with reason) · **not started**
+"Fakes" below means the provider path runs end to end in API tests against an
+in-memory provider (`apps/server/src/test/fakes.ts`), with real signature
+verification, idempotency and persistence. **Live** means checked against the
+real sandbox. No provider credentials have been supplied yet, so every
+integration row is code-complete and fake-tested but **not yet live-verified**.
 
 ## F1. Accounts, roles and permissions — P2
 
-| ID   | Status      | Where                                                                                                                                                                                   |
-| ---- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1.1 | not started | P2                                                                                                                                                                                      |
-| F1.2 | not started | P2                                                                                                                                                                                      |
-| F1.3 | not started | P2                                                                                                                                                                                      |
-| F1.4 | not started | P2                                                                                                                                                                                      |
-| F1.5 | not started | P2                                                                                                                                                                                      |
-| F1.6 | partial     | The rule is encoded: `notFound` in `packages/shared/src/errors.ts` is used for "missing" and "another workspace" alike, and is tested. Enforcement arrives with the repositories in P2. |
+| ID   | Status | Where                                                                                                                       |
+| ---- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| F1.1 | done   | `auth-service.ts`, `routes/auth.ts`, `auth.test.ts`                                                                         |
+| F1.2 | done   | `membership-service.ts`, `members.test.ts`                                                                                  |
+| F1.3 | done   | `packages/domain/src/permissions.ts`, `permission-set-service.ts`                                                           |
+| F1.4 | done   | `packages/domain/src/masking.ts`; dashboard pipeline tile shows `Hidden`                                                    |
+| F1.5 | done   | `require-permission.ts` on every route; tests per module                                                                    |
+| F1.6 | done   | `workspaceId` from session on every query; 404 for other workspaces; sockets join workspace rooms only (`realtime.test.ts`) |
 
 ## F2. Customizable CRM — P3
 
-F2.1 – F2.8: not started.
+| ID          | Status | Where                                                                           |
+| ----------- | ------ | ------------------------------------------------------------------------------- |
+| F2.1 – F2.6 | done   | `crm-service.ts`, `pipeline-service.ts`, `saved-lists.ts`                       |
+| F2.7        | done   | `activity-repository.ts`; messages, payments and appointments now write entries |
+| F2.8        | done   | `customer-view-service.ts` now fills conversations, payments, appointments      |
 
-## F3. Lead capture, assignment, acknowledgement, escalation — P1 (rules), P4 (wiring)
+## F3. Leads — P1 rules, P4 wiring, P10 alerts
 
-All rules now exist and are unit-tested in `packages/domain`. Every F3 row stays
-**partial** until P4 persists the state, runs the timers in the worker and puts
-screens on top; none of it is reachable by a user yet.
-
-| ID   | Status      | Where                                                                                                                                                                                                                                                                                            |
-| ---- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| F3.1 | not started | P4                                                                                                                                                                                                                                                                                               |
-| F3.2 | partial     | `availability.ts` fixes the four statuses and which count as absence. Setting them is P4.                                                                                                                                                                                                        |
-| F3.3 | partial     | **Rule done.** `assignment.ts` `assignLead` does round-robin among Available employees under the max-open-leads limit, with the cursor passed in and out. Refusals name one of five causes. 27 tests. Admin configuration and the API are P4.                                                    |
-| F3.4 | partial     | **Rule done.** `acknowledgementDeadline` gives the countdown target and `acknowledge` settles the lead. The notification and the visible timer are P4.                                                                                                                                           |
-| F3.5 | partial     | **Rule done.** `nextEscalation` walks assignee, next eligible, backup, manager, with the level count and each duration from configuration. 32 tests.                                                                                                                                             |
-| F3.6 | partial     | **Rule done.** `reassignForAbsence` moves an unacknowledged lead and leaves an acknowledged one with its owner, which is the defined treatment. Triggering it on a status change is P4.                                                                                                          |
-| F3.7 | partial     | **Rule done.** `recoveryQueueMembership` returns every reason that applies, from the three Section 7 grounds. The page is P4.                                                                                                                                                                    |
-| F3.8 | partial     | **Rule done.** `nextEscalation` is pure, so two timers on one stored state both compute level n+1, never n+2; each window starts at the previous deadline, so no level is skipped or repeated. Plus the worker's non-overlapping ticker. The conditional write that makes it exactly-once is P4. |
-| F3.9 | not started | P10                                                                                                                                                                                                                                                                                              |
+| ID          | Status       | Where                                                                                                                      |
+| ----------- | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| F3.1        | done         | web form, manual entry, and inbound message (`messaging-service.ts receiveInboundMessage`)                                 |
+| F3.2 – F3.8 | done         | `lead-service.ts`, worker; UI `features/leads/`                                                                            |
+| F3.4        | done         | Section 7 "recorded action" now acknowledges: notes, stage changes, messages, appointments (`acknowledgeOnRecordedAction`) |
+| F3.9        | done (fakes) | escalation queues a Telegram alert in the same transaction (`notification-service.ts`)                                     |
 
 ## F4. Audit history — P2
 
-F4.1 – F4.3: not started.
+F4.1 – F4.3: **done**. Assignment rule changes now audited with before/after;
+integration connect/update/disconnect audited without secrets.
 
 ## F5. Operational dashboard — P5
 
-F5.1, F5.3, F5.4 and F5.5: not started.
-
-| ID   | Status  | Where                                                                                                                                                                                       |
-| ---- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F5.2 | partial | **Definitions done.** `packages/domain/src/metrics.ts` holds one function per Section 7 definition and is the only place a figure is computed. 71 tests. The screens that call them are P5. |
+| ID   | Status | Where                                                                                                 |
+| ---- | ------ | ----------------------------------------------------------------------------------------------------- |
+| F5.1 | done   | `dashboard-service.ts`, all eight figures                                                             |
+| F5.2 | done   | every figure from `packages/domain/src/metrics.ts`; test asserts tile = drill-down list total         |
+| F5.3 | done   | drill-downs: new leads, pipeline, recovery, escalations (audit), availability, appointments, payments |
+| F5.4 | done   | `MEMBERS_MANAGE` holders get company scope, others personal; tested                                   |
+| F5.5 | done   | `PUT /dashboard/preferences`, stored on the membership (server-side)                                  |
 
 ## I1 – I5. Integrations — P6 – P10
 
-All not started. `.env.example` declares every credential each provider will
-need, and `docs/decisions.md` D7 explains why they are not validated yet.
+| ID          | Status       | Notes                                                                                                                                                                                                                                                |
+| ----------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| I1.1 – I1.9 | done (fakes) | Twilio webhook signature (HMAC-SHA1), MessageSid idempotency, contact match by digits, STOP opt-out, status callbacks forward-only, failed sends kept with reason and retryable. Needs live sandbox check.                                           |
+| I2.1 – I2.8 | done (fakes) | Stripe Checkout via REST, `Stripe-Signature` verified on raw body with 300 s tolerance, event-id idempotency, expired/failed/refunded, collected vs projected via domain functions, no card fields. Needs live test-mode check.                      |
+| I3.1 – I3.7 | done (fakes) | OAuth with signed member-bound state, encrypted tokens, auto refresh, `needs_reconnect` on `invalid_grant`, freebusy overlap warning, UTC + IANA zone storage, reschedule/cancel sync, non-bookable employees with reason. Needs a Google test user. |
+| I4.1 – I4.4 | done (fakes) | Telegram bot per workspace, chat id per employee, 3 attempts then `failed`, visible on Integrations page.                                                                                                                                            |
+| I5.1 – I5.8 | done         | Integrations page with status, last success, recent errors, can/cannot text; per-workspace encrypted credentials; sync history; transient retry; permission + audit; provider failure isolated (timeouts, try/catch, no shared state).               |
 
-## Section 6. Quality requirements
+## Section 6. Quality
 
-| ID  | Status      | Where it stands after P0                                                                                                                                                                                                                                                                                                                                                                                 |
-| --- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q1  | not started | P2                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Q2  | partial     | The `notFound`-for-another-workspace rule is encoded and tested. Endpoint enforcement is P2.                                                                                                                                                                                                                                                                                                             |
-| Q3  | partial     | Helmet, a CORS allow-list, a 1 MB body limit and Zod-based validation plumbing are in place and tested in `apps/server/src/http/app.test.ts`. CSRF and per-endpoint schemas arrive with the first mutating endpoint in P2.                                                                                                                                                                               |
-| Q4  | not started | P3, P4                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Q5  | partial     | Non-overlapping worker ticks, plus an idempotent, skip-free `nextEscalation` that two concurrent timers resolve to a single step. Lease-based job claims and the restart proof are P4.                                                                                                                                                                                                                   |
-| Q6  | **done**    | `apps/server/src/db/mongoose.ts` owns the connection; `mongoose.test.ts` writes a document, disconnects, reconnects and reads it back. Verified live against a real single-node replica set: health went `up` → `degraded` → `up` across a database restart without restarting the API, and the set's configuration survived. The `docker-compose.yml` wrapper itself is unverified — see decisions D10. |
-| Q7  | partial     | The scaffold page is fluid with no horizontal scroll and `overflow-x: hidden` is set globally. The Playwright width sweep is P11.                                                                                                                                                                                                                                                                        |
-| Q8  | partial     | The status card labels its region, announces changes with `aria-live`, carries every status in words and a symbol as well as colour, has a visible focus ring, and honours `prefers-reduced-motion`. Covered by tests. A full keyboard sweep is P11.                                                                                                                                                     |
-| Q9  | partial     | The pagination contract exists and is tested (`packages/shared/src/pagination.ts`, default 25, max 100). No list endpoint exists yet.                                                                                                                                                                                                                                                                    |
-| Q10 | partial     | `ApiError` carries the server's message, hint and field errors; the status card renders loading, success and error states; all tested. Applies to every later screen.                                                                                                                                                                                                                                    |
-| Q11 | not started | P5                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Q12 | partial     | **Definitions done.** Every Section 7 figure is one function in `packages/domain/src/metrics.ts`, and `availableEmployeeCount` delegates to the same predicate the assignment engine uses, so the dashboard cannot report someone as available whom the engine would refuse. Shown consistent once P5 puts screens on it.                                                                                |
-| Q13 | **done**    | Zod-validated config in both Node processes, `.env.example` with every variable, no secrets in the repository, README setup instructions.                                                                                                                                                                                                                                                                |
-| Q14 | **done**    | Domain rules, data access, integrations and presentation are separate packages with a one-way dependency rule, documented in `docs/architecture.md`.                                                                                                                                                                                                                                                     |
+| ID                       | Status  | Notes                                                                              |
+| ------------------------ | ------- | ---------------------------------------------------------------------------------- |
+| Q1, Q2, Q3, Q6, Q13, Q14 | done    |                                                                                    |
+| Q4                       | done    | version checks on leads, opportunities, appointments, payments                     |
+| Q5                       | done    | leases, idempotency keys, provider event claims inside transactions                |
+| Q7                       | partial | new screens use wrapping layouts; no automated 360/768/1280 sweep yet              |
+| Q8                       | partial | labelled fields, words + colour statuses, keyboard alternatives; no full audit yet |
+| Q9                       | done    | every new list paginated (default 25, max 100)                                     |
+| Q10                      | done    | every action shows loading, success and error; provider errors explained           |
+| Q11                      | done    | Socket.IO + outbox relay; live-verified that a created lead reaches another socket |
+| Q12                      | done    | dashboard and lists share the same filters and domain functions                    |
+
+## Known gaps
+
+- No Playwright flows yet for leads, dashboard, messaging, payments, calendar.
+- Integrations not yet exercised against real sandboxes (credentials needed).

@@ -182,8 +182,41 @@ readable message naming any variable that is missing or malformed. Variable
 values never appear in that message, because the environment holds signing
 secrets.
 
-Provider credentials are added in the phase that uses them; each phase's report
-says exactly what to paste into `.env`.
+### Integrations (I1 – I4)
+
+Each workspace connects its own Twilio, Stripe and Telegram accounts on the
+**Integrations** page; Google Calendar is connected by each employee under
+**Settings**. Secrets are encrypted with `ENCRYPTION_KEY` (AES-256-GCM) and only
+their last four characters are ever shown. Without `ENCRYPTION_KEY` the app runs
+but refuses to connect anything.
+
+1. `ENCRYPTION_KEY=$(openssl rand -base64 32)` in `.env`.
+2. Expose the API over HTTPS for webhooks, e.g. `cloudflared tunnel --url http://localhost:4000`,
+   and set `PUBLIC_BASE_URL` to that address. The Integrations page then shows
+   the exact webhook URLs to paste into each provider.
+3. **Twilio (WhatsApp sandbox):** Account SID, Auth Token and the sender
+   `whatsapp:+14155238886`. In the sandbox settings set _When a message comes in_
+   to the page's `inbound` URL. Phones must send the sandbox join phrase first.
+4. **Stripe (test mode):** `sk_test_…` key. Add a webhook endpoint with the page's
+   URL for `checkout.session.completed`, `checkout.session.expired`,
+   `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
+   `payment_intent.payment_failed` and `charge.refunded`, then paste its `whsec_…`.
+   Pay with card `4242 4242 4242 4242`; refund from the Stripe dashboard.
+5. **Google Calendar:** a Cloud project with the Calendar API enabled, an OAuth
+   client (web) with redirect URI `GOOGLE_OAUTH_REDIRECT_URI`, and your Google
+   account listed as a test user. Set the three `GOOGLE_OAUTH_*` variables.
+6. **Telegram:** create a bot with @BotFather and paste its token. Each employee
+   presses _Start_ on the bot, then enters their chat id under Settings
+   (message @userinfobot to find it).
+
+`pnpm seed` connects the demo workspace automatically when the Twilio, Stripe
+or Telegram variables are present in `.env`.
+
+### Demo accounts (`pnpm seed`)
+
+Password for all: `demo-password-123`. Acme Solar: `owner@acme.test`,
+`admin@acme.test`, `sara@acme.test`, `omar@acme.test` (acknowledgement window
+30 s). Beta Clinic, a second isolated workspace: `owner@beta.test`.
 
 **`.env` is never committed.** Only `.env.example`, which holds no values.
 

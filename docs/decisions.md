@@ -109,3 +109,147 @@ Claude Code reads `CLAUDE.md`. macOS resolved the lowercase name because its
 filesystem is case-insensitive, but the committed name would not resolve on a
 Linux checkout. The empty "Repository layout" heading in it was filled in with
 the tree this phase created; no rule was changed.
+
+---
+
+## P1 — Domain core
+
+### D13. The round-robin cursor is an input and an output, never module state
+
+`assignLead` takes the cursor and returns the next one. A module-level variable
+would be shared across workspaces in one process, would reset on restart, and
+would make a decision impossible to reproduce in a test. As a value it is
+persisted on the workspace, is auditable, and makes every decision replayable
+from its inputs alone.
+
+### D14. Round-robin scans the whole candidate list, not the eligible subset
+
+The scan starts after the cursor's position in the full candidate list and wraps
+once. Filtering to eligible employees first and then rotating would shift
+everyone's position whenever someone went Busy, so an employee who stepped away
+for one round would come back at the wrong place in the queue. Scanning the full
+list keeps each employee's slot, and a cursor naming someone now ineligible
+still advances to the next person rather than restarting.
+
+### D15. A refusal to assign names one of five distinct causes
+
+`no_candidates`, `all_excluded`, `none_available`, `all_at_capacity` and
+`limit_below_one`. F3.7 requires the recovery queue to show a reason per item,
+and these call for different action: "everyone is at their limit" is a staffing
+or configuration problem, "everyone is offline" is a rota problem, and
+`limit_below_one` is a misconfigured rule that should not be reported as a
+staffing failure. The cursor is returned unchanged on refusal so a failed
+attempt does not consume anyone's turn.
+
+### D16. An escalated window starts at the previous deadline, not at `now`
+
+This is what makes escalation skip-free. If the worker is down for three
+windows, computing the new window from `now` would collapse the missed levels
+into one jump and lose the intermediate steps, so the designated backup would
+never have been given their turn. Starting from the previous deadline means each
+call advances exactly one level and the whole chain is walked in order, however
+late the worker is.
+
+It also gives idempotency for free (F3.8): `nextEscalation` is a pure function,
+so two timers firing on the same stored state both compute level n+1. One wins
+the conditional write in P4; the other recomputes the same step and is a no-op.
+
+### D17. No sixth state for "escalated through every level"
+
+At the last configured level `nextEscalation` returns `null` and the lead stays
+`escalated` and unacknowledged. The prompt names five states and a terminal
+`exhausted` would be a sixth, with no transition out of it. The recovery queue
+is what surfaces these leads, which is what F3.7 is for, and
+`recoveryQueueMembership` flags such a lead on both the "beyond its window" and
+"escalated repeatedly" grounds.
+
+### D18. Settled states are returned by identity from every transition
+
+`acknowledge`, `reassignManually` and `reassignForAbsence` return the state
+unchanged when it is already settled. A late Acknowledge click after a manager
+reassigned the lead therefore cannot take ownership back, and absence handling
+leaves an already acknowledged lead with its accountable owner, which is the
+"treatment of already acknowledged leads" F3.6 asks to be defined.
+
+### D19. `escalationCount` counts automatic escalations only
+
+Section 7 defines escalation as an automatic reassignment from an expired
+window, and says manual reassignments are counted separately. A manual or
+absence reassignment settles the state and leaves the count alone, so the
+dashboard's "escalations in the last 24 hours" cannot be inflated by a manager
+tidying up.
+
+### D20. A settled lead is never in the recovery queue
+
+Read literally, "has escalated two or more times" would keep a lead in the queue
+after it was finally acknowledged. The queue exists to surface leads still at
+risk, so acknowledgement, manual reassignment and absence reassignment all take
+a lead out of it; the escalation history stays visible in the activity log and
+the audit trail. A lead reassigned away gets a fresh assignment state that is
+judged on its own.
+
+### D21. Money is integer minor units, and every total is per currency
+
+Amounts are cents, pence or paisa as integers: floating-point currency drifts
+once enough rows are summed, and these totals are compared against Stripe's
+records. Every function that adds money takes a `currency` and ignores records
+in any other, so a USD payment can never be added to a EUR one. I2.1 stores both
+an amount and a currency, which makes a single untagged total wrong. Display
+scaling is the web app's job.
+
+### D22. `timeToFirstResponse` measures from the _first_ assignment
+
+Section 7 defines "assigned time" as the moment the system _last_ assigned the
+lead, but "time to first response" as the time from the lead's _first_
+assignment. Those are different fields, so leads carry `firstAssignedAt`
+separately. Measuring from the last assignment would mean a lead that escalated
+three times reported only the final holder's response time, making a badly
+handled lead look fast.
+
+A negative interval, which can only come from contradictory timestamps, is
+excluded rather than returned, so one bad record cannot pull an average below
+zero. Unacknowledged leads are excluded from the average rather than counted as
+zero, and `sampleSize` and `excluded` come back alongside it so the figure can be
+explained when drilled into (F5.3).
+
+### D23. Collected revenue requires webhook confirmation, not a status
+
+A payment counts only when `confirmedByWebhook` is true. A `paid` status set
+optimistically by the interface is not revenue until the provider says so
+(I2.2, I2.6). `refunded` payments count toward gross with the refund subtracted,
+so a full refund nets zero and a partial refund leaves the remainder. The result
+returns `gross`, `refunded` and `net` rather than one number, so the dashboard
+figure can be reconciled against Stripe.
+
+### D24. Projected revenue returns its two halves as well as the total
+
+Section 7 defines it as the value of open opportunities _and_ of payment requests
+not yet paid. An open opportunity that also has a pending payment request
+therefore contributes to both halves. Rather than silently de-duplicating, which
+would contradict the definition, the function returns `openOpportunities` and
+`unpaidRequests` separately so a reader comparing it with collected revenue can
+see the overlap (Q12). Only `pending` counts as "not yet paid": `expired` and
+`failed` will not arrive, and `refunded` was already paid.
+
+### D25. Metrics never apply permission masking
+
+`openPipelineValue` returns real values. Whether a user may see them is a
+permission question answered on the server before the metric is called (F1.4). A
+metric that returned zero for an unpermitted user would make the same figure
+differ between screens, which Q12 forbids; the masking happens in the response
+layer instead.
+
+### D26. `byStage` is ordered by stage id, not by pipeline position
+
+The domain has no notion of a stage's display position, so sorting by id gives a
+deterministic result from the same input in any order. The caller reorders by
+the pipeline's configured stage positions for display.
+
+### D27. Audit event types live in the domain
+
+The server writes them, the worker writes some of them, and the web app's audit
+viewer filters by them (F4.2). One list means a filter cannot drift from what is
+recorded. Values are the stored strings in `subject.verb` form, so the viewer can
+group by subject; an existing value is never renamed because it is persisted
+data. There is deliberately no `audit.*` event, because nothing may edit or
+delete an audit entry (F4.3) — a test asserts that.

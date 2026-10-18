@@ -216,6 +216,10 @@ importers:
   packages/config: {}
 
   packages/domain:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@ubmp/config':
         specifier: workspace:*

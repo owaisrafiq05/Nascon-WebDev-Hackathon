@@ -17,7 +17,7 @@ import { createAuthRouter } from './routes/auth.js';
 import { createCrmRouter } from './routes/crm.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMembersRouter } from './routes/members.js';
-import { createOpportunitiesRouter } from './routes/opportunities.js';
+import { createPipelinesRouter } from './routes/pipelines.js';
 import { createPermissionSetsRouter } from './routes/permission-sets.js';
 
 export const API_PREFIX = '/api';
@@ -112,7 +112,7 @@ export function createApp({
   app.use(API_PREFIX, createCrmRouter());
   app.use(API_PREFIX, createMembersRouter(config));
   app.use(API_PREFIX, createPermissionSetsRouter());
-  app.use(API_PREFIX, createOpportunitiesRouter());
+  app.use(API_PREFIX, createPipelinesRouter());
 
   app.use(notFoundHandler());
   app.use(errorHandler(logger));

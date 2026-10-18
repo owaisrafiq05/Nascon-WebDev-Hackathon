@@ -9,10 +9,12 @@ import { ActivityModel } from '../db/models/activity.js';
 import { AuditEventModel } from '../db/models/audit-event.js';
 import { CompanyModel } from '../db/models/company.js';
 import { ContactModel } from '../db/models/contact.js';
+import { CustomFieldDefinitionModel } from '../db/models/custom-field-definition.js';
 import { InviteModel } from '../db/models/invite.js';
 import { MembershipModel } from '../db/models/membership.js';
 import { OpportunityModel } from '../db/models/opportunity.js';
 import { PermissionSetModel } from '../db/models/permission-set.js';
+import { PipelineModel } from '../db/models/pipeline.js';
 import { SessionModel } from '../db/models/session.js';
 import { UserModel } from '../db/models/user.js';
 import { WorkspaceModel } from '../db/models/workspace.js';
@@ -52,10 +54,12 @@ const MODELS = [
   AuditEventModel,
   CompanyModel,
   ContactModel,
+  CustomFieldDefinitionModel,
   InviteModel,
   MembershipModel,
   OpportunityModel,
   PermissionSetModel,
+  PipelineModel,
   SessionModel,
   UserModel,
   WorkspaceModel,

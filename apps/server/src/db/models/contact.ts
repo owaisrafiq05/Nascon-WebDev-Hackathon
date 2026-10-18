@@ -45,7 +45,13 @@ const contactSchema = new Schema<ContactDoc>(
     lastActivityAt: { type: Date, default: null },
     version: { type: Number, required: true, default: 0 },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    // `minimize: false` keeps `customFields: {}` in the document. Mongoose
+    // strips empty objects by default, which would make the field absent rather
+    // than empty and force every reader to handle both shapes.
+    minimize: false,
+  },
 );
 
 // One index per filter criterion F2.6 names, all led by workspaceId so a query

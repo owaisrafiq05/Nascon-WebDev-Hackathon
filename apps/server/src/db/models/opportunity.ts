@@ -57,7 +57,13 @@ const opportunitySchema = new Schema<OpportunityDoc>(
     customFields: { type: Schema.Types.Mixed, default: () => ({}) },
     version: { type: Number, required: true, default: 0 },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    // `minimize: false` keeps `customFields: {}` in the document. Mongoose
+    // strips empty objects by default, which would make the field absent rather
+    // than empty and force every reader to handle both shapes.
+    minimize: false,
+  },
 );
 
 // One index per access path F2.6 and Section 7 need, all led by workspaceId so

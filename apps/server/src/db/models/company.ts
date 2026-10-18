@@ -32,7 +32,13 @@ const companySchema = new Schema<CompanyDoc>(
     ownerMembershipId: { type: Schema.Types.ObjectId, ref: 'Membership', default: null },
     version: { type: Number, required: true, default: 0 },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    // `minimize: false` keeps `customFields: {}` in the document. Mongoose
+    // strips empty objects by default, which would make the field absent rather
+    // than empty and force every reader to handle both shapes.
+    minimize: false,
+  },
 );
 
 // Listing and searching, always inside one workspace (F1.6, Q9).

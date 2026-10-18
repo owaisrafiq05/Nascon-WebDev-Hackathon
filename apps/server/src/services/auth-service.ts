@@ -13,6 +13,7 @@ import { PermissionSetModel } from '../db/models/permission-set.js';
 import { normaliseEmail, UserModel } from '../db/models/user.js';
 import { WorkspaceModel } from '../db/models/workspace.js';
 import { appendAuditEvent } from '../repositories/audit-repository.js';
+import { seedDefaultPipeline } from './pipeline-service.js';
 import { hashPassword, verifyPassword } from './password.js';
 
 /**
@@ -46,14 +47,14 @@ export interface SignUpResult {
 }
 
 /**
- * Creates the user, their workspace, the workspace's default permission sets and
- * an Owner membership — all in one transaction (F1.1).
+ * Creates the user, their workspace, its default permission sets, its default
+ * pipeline and an Owner membership — all in one transaction (F1.1).
  *
- * A transaction rather than compensating logic: the four documents are
- * meaningless apart, and a half-finished sign-up would leave an account that can
- * authenticate but belongs to no workspace, or a workspace with no Owner, which
- * nothing in the platform could repair. MongoDB runs as a replica set precisely
- * so this is available (see docker-compose.yml).
+ * A transaction rather than compensating logic: the documents are meaningless
+ * apart, and a half-finished sign-up would leave an account that can
+ * authenticate but belongs to no workspace, or a workspace with no Owner or no
+ * pipeline, which nothing in the platform could repair. MongoDB runs as a
+ * replica set precisely so this is available (see docker-compose.yml).
  */
 export async function signUp(input: SignUpInput): Promise<SignUpResult> {
   const email = normaliseEmail(input.email);
@@ -103,6 +104,10 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
         })),
         { session, ordered: true },
       );
+
+      // A workspace with no pipeline could hold no opportunity, so one is
+      // seeded here rather than left for an Admin to discover (F2.5).
+      await seedDefaultPipeline(workspace._id, session);
 
       // The first user is the Owner (F1.1). No permission sets are attached:
       // an Owner holds everything by level.

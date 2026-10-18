@@ -55,17 +55,25 @@ async function grantValueView(owner: TestClient, membershipId: string): Promise<
     .expect(204);
 }
 
-const opportunityBody = {
-  name: 'Roof install',
-  value: 250_000,
-  currency: 'USD',
-  stageId: 'proposal',
-};
+/**
+ * Opportunities now belong to a contact (F2.1), so each test creates one first.
+ * The body is built per client rather than shared, because the contact id
+ * differs per workspace.
+ */
+async function opportunityFor(client: TestClient): Promise<Record<string, unknown>> {
+  const contact = await client.post('/api/contacts', { firstName: 'Roof', lastName: 'Owner' });
+  return {
+    name: 'Roof install',
+    contactId: contact.body.id,
+    value: 250_000,
+    currency: 'USD',
+  };
+}
 
 describe('opportunity value masking (F1.4)', () => {
   it('shows the value to a member who holds opportunity.value.view', async () => {
     const owner = await signUpOwner(app);
-    await owner.post('/api/opportunities', opportunityBody).expect(201);
+    await owner.post('/api/opportunities', await opportunityFor(owner)).expect(201);
 
     const list = await owner.get('/api/opportunities').expect(200);
 
@@ -77,7 +85,9 @@ describe('opportunity value masking (F1.4)', () => {
   describe('for a member without the permission', () => {
     async function setUp(): Promise<{ owner: TestClient; member: TestClient; id: string }> {
       const owner = await signUpOwner(app, { email: 'owner@example.com' });
-      const created = await owner.post('/api/opportunities', opportunityBody).expect(201);
+      const created = await owner
+        .post('/api/opportunities', await opportunityFor(owner))
+        .expect(201);
 
       // Granted export and view, but never opportunity.value.view.
       const member = await addMember(owner, 'member@example.com', 'user');
@@ -127,13 +137,15 @@ describe('opportunity value masking (F1.4)', () => {
       const detail = await member.get(`/api/opportunities/${id}`).expect(200);
 
       expect(detail.body.name).toBe('Roof install');
-      expect(detail.body.stageId).toBe('proposal');
+      // Landed in the seeded pipeline's first stage, whose id is opaque.
+      expect(detail.body.stageId).toBeTruthy();
+      expect(detail.body.stageOutcome).toBe('open');
     });
   });
 
   it('reveals the value once the Owner grants the permission', async () => {
     const owner = await signUpOwner(app, { email: 'owner@example.com' });
-    await owner.post('/api/opportunities', opportunityBody).expect(201);
+    await owner.post('/api/opportunities', await opportunityFor(owner)).expect(201);
     const member = await addMember(owner, 'member@example.com', 'user');
 
     const before = await member.get('/api/opportunities').expect(200);
@@ -148,7 +160,7 @@ describe('opportunity value masking (F1.4)', () => {
 
   it('writes the amount in the export for a permitted member', async () => {
     const owner = await signUpOwner(app);
-    await owner.post('/api/opportunities', opportunityBody).expect(201);
+    await owner.post('/api/opportunities', await opportunityFor(owner)).expect(201);
 
     const csv = await owner.get('/api/opportunities/export/csv').expect(200);
 
@@ -158,7 +170,10 @@ describe('opportunity value masking (F1.4)', () => {
 
   it('reports no value differently from a hidden value', async () => {
     const owner = await signUpOwner(app, { email: 'owner@example.com' });
-    await owner.post('/api/opportunities', { name: 'Survey', stageId: 'qualify' }).expect(201);
+    const surveyContact = await owner.post('/api/contacts', { firstName: 'Survey' });
+    await owner
+      .post('/api/opportunities', { name: 'Survey', contactId: surveyContact.body.id })
+      .expect(201);
     const member = await addMember(owner, 'member@example.com', 'user');
 
     const list = await member.get('/api/opportunities').expect(200);
@@ -203,7 +218,9 @@ describe('permission enforcement on opportunities', () => {
       .expect(204);
 
     const viewer = await signIn(app, 'member@example.com');
-    await viewer.post('/api/opportunities', opportunityBody).expect(403);
+    await viewer
+      .post('/api/opportunities', { name: 'Nope', contactId: '0123456789abcdef01234567' })
+      .expect(403);
   });
 
   it('refuses the export to a member with view but not export', async () => {
@@ -237,7 +254,9 @@ describe('opportunity workspace isolation', () => {
     const first = await signUpOwner(app, { email: 'a@example.com' });
     const second = await signUpOwner(app, { email: 'b@example.com' });
 
-    const created = await second.post('/api/opportunities', opportunityBody).expect(201);
+    const created = await second
+      .post('/api/opportunities', await opportunityFor(second))
+      .expect(201);
 
     const response = await first.get(`/api/opportunities/${created.body.id}`).expect(404);
 
@@ -249,8 +268,11 @@ describe('opportunity workspace isolation', () => {
     const first = await signUpOwner(app, { email: 'a@example.com' });
     const second = await signUpOwner(app, { email: 'b@example.com' });
 
-    await second.post('/api/opportunities', opportunityBody).expect(201);
-    await first.post('/api/opportunities', { name: 'Mine', stageId: 'qualify' }).expect(201);
+    await second.post('/api/opportunities', await opportunityFor(second)).expect(201);
+    const mineContact = await first.post('/api/contacts', { firstName: 'Mine' });
+    await first
+      .post('/api/opportunities', { name: 'Mine', contactId: mineContact.body.id })
+      .expect(201);
 
     const list = await first.get('/api/opportunities').expect(200);
 
@@ -262,7 +284,7 @@ describe('opportunity workspace isolation', () => {
     const first = await signUpOwner(app, { email: 'a@example.com' });
     const second = await signUpOwner(app, { email: 'b@example.com' });
 
-    await second.post('/api/opportunities', opportunityBody).expect(201);
+    await second.post('/api/opportunities', await opportunityFor(second)).expect(201);
 
     const csv = await first.get('/api/opportunities/export/csv').expect(200);
 
@@ -274,7 +296,10 @@ describe('opportunity workspace isolation', () => {
     const second = await signUpOwner(app, { email: 'b@example.com' });
 
     await first
-      .post('/api/opportunities', { ...opportunityBody, workspaceId: second.workspaceId })
+      .post('/api/opportunities', {
+        ...(await opportunityFor(first)),
+        workspaceId: second.workspaceId,
+      })
       .expect(201);
 
     // It landed in the caller's own workspace, not the one in the body.
@@ -288,8 +313,9 @@ describe('opportunity list pagination (Q9)', () => {
     const owner = await signUpOwner(app);
 
     for (let index = 0; index < 5; index += 1) {
+      const contact = await owner.post('/api/contacts', { firstName: `C${String(index)}` });
       await owner
-        .post('/api/opportunities', { name: `Opp ${String(index)}`, stageId: 'qualify' })
+        .post('/api/opportunities', { name: `Opp ${String(index)}`, contactId: contact.body.id })
         .expect(201);
     }
 

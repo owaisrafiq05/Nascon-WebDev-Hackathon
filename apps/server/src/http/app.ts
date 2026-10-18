@@ -12,6 +12,7 @@ import { errorHandler } from './middleware/error-handler.js';
 import { notFoundHandler } from './middleware/not-found.js';
 import { loginRateLimiter } from './middleware/rate-limit.js';
 import { requestId } from './middleware/request-id.js';
+import { createAuditRouter } from './routes/audit.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMembersRouter } from './routes/members.js';
@@ -106,6 +107,7 @@ export function createApp({
     }),
   );
 
+  app.use(API_PREFIX, createAuditRouter());
   app.use(API_PREFIX, createMembersRouter(config));
   app.use(API_PREFIX, createPermissionSetsRouter());
   app.use(API_PREFIX, createOpportunitiesRouter());

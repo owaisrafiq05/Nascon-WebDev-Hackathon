@@ -63,3 +63,37 @@ export function databaseStatus(
       return 'down';
   }
 }
+
+/**
+ * Actually asks the server whether it is there, rather than trusting the driver's
+ * cached `readyState`. A connection can read as `connected` while the server has
+ * become unreachable, which is exactly the case the health endpoint exists to
+ * catch.
+ *
+ * The ping is capped so that a hung server degrades the health response instead
+ * of holding the request open.
+ */
+export async function pingDatabase(timeoutMs = 2_000): Promise<DependencyStatus> {
+  const state = databaseStatus();
+  if (state !== 'up') return state;
+
+  const db = mongoose.connection.db;
+  if (db === undefined) return 'down';
+
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    await Promise.race([
+      db.admin().command({ ping: 1 }),
+      new Promise((_resolve, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`database ping exceeded ${String(timeoutMs)}ms`));
+        }, timeoutMs);
+      }),
+    ]);
+    return 'up';
+  } catch {
+    return 'down';
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}

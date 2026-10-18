@@ -1,20 +1,20 @@
 import type { HealthResponse } from '@ubmp/shared';
 import { Router } from 'express';
 
-import { databaseStatus } from '../../db/mongoose.js';
+import { pingDatabase } from '../../db/mongoose.js';
 
 export interface HealthRouterOptions {
   readonly service: string;
   readonly version: string;
   readonly environment: string;
   /** Injected so the route can be tested without a database. */
-  readonly dependencyStatus?: () => HealthResponse['dependencies'];
+  readonly dependencyStatus?: () => Promise<HealthResponse['dependencies']>;
   readonly uptimeSeconds?: () => number;
 }
 
 /**
- * `GET /api/health` reports whether the process is up and whether its
- * dependencies are reachable. It is unauthenticated on purpose: it is used by the
+ * `GET /api/health` pings MongoDB and reports whether the process and its
+ * dependencies are healthy. It is unauthenticated on purpose: it is used by the
  * web app's startup check and by container orchestration, and it exposes no
  * workspace data.
  */
@@ -22,11 +22,11 @@ export function createHealthRouter(options: HealthRouterOptions): Router {
   const router = Router();
 
   const readDependencies =
-    options.dependencyStatus ?? (() => ({ database: databaseStatus() }) as const);
+    options.dependencyStatus ?? (async () => ({ database: await pingDatabase() }));
   const readUptime = options.uptimeSeconds ?? (() => process.uptime());
 
-  router.get('/health', (_req, res) => {
-    const dependencies = readDependencies();
+  router.get('/health', async (_req, res) => {
+    const dependencies = await readDependencies();
     const allUp = Object.values(dependencies).every((status) => status === 'up');
 
     const body: HealthResponse = {

@@ -367,3 +367,69 @@ export function availableEmployeeCount(
 ): number {
   return employees.filter((employee) => isAvailableEmployee(employee, limits)).length;
 }
+
+// ---------------------------------------------------------------------------
+// Counts over a period (F5.1)
+// ---------------------------------------------------------------------------
+
+/** A half-open period `[from, to)`, in epoch milliseconds. */
+export interface Period {
+  readonly from: number;
+  readonly to: number;
+}
+
+export function inPeriod(at: number, { from, to }: Period): boolean {
+  return at >= from && at < to;
+}
+
+/** "New leads": leads created by intake within the period. */
+export function newLeadCount(
+  leads: readonly { readonly createdAt: number }[],
+  period: Period,
+): number {
+  return leads.filter((lead) => inPeriod(lead.createdAt, period)).length;
+}
+
+export const REASSIGNMENT_KINDS = ['escalation', 'manual', 'absence'] as const;
+export type ReassignmentKind = (typeof REASSIGNMENT_KINDS)[number];
+
+/**
+ * "Escalation: an automatic reassignment caused by an expired acknowledgement
+ * window; manual reassignments are counted separately." Only `escalation`
+ * entries count here.
+ */
+export function escalationCount(
+  reassignments: readonly { readonly at: number; readonly kind: ReassignmentKind }[],
+  period: Period,
+): number {
+  return reassignments.filter((entry) => entry.kind === 'escalation' && inPeriod(entry.at, period))
+    .length;
+}
+
+/** "Upcoming appointments": scheduled, starting at or after `now`. */
+export function upcomingAppointmentCount(
+  appointments: readonly {
+    readonly startsAt: number;
+    readonly status: 'scheduled' | 'cancelled';
+  }[],
+  now: number,
+): number {
+  return appointments.filter(
+    (appointment) => appointment.status === 'scheduled' && appointment.startsAt >= now,
+  ).length;
+}
+
+/**
+ * "Payments received" in a period: collected revenue (webhook-confirmed,
+ * minus refunds) restricted to payments whose confirmation falls inside it.
+ */
+export function paymentsReceived(
+  payments: readonly (PaymentRecord & { readonly paidAt: number | null })[],
+  period: Period,
+  scope: CurrencyScope,
+): CollectedRevenue {
+  return collectedRevenue(
+    payments.filter((payment) => payment.paidAt !== null && inPeriod(payment.paidAt, period)),
+    scope,
+  );
+}

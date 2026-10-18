@@ -1,6 +1,7 @@
 import { ALL_AUDIT_EVENT_TYPES, PERMISSIONS } from '@ubmp/domain';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Alert } from '../../components/Alert.js';
@@ -69,8 +70,24 @@ function buildQuery(filters: Filters): string {
   return params.toString();
 }
 
+/** An ISO instant (from a dashboard drill-down) as the `YYYY-MM-DD` a date input holds. */
+function isoToDateInput(value: string | null): string {
+  if (value === null) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export function AuditPage() {
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  // A dashboard tile links here with `type` and `from`, so the filters start filled.
+  const [params] = useSearchParams();
+  const [filters, setFilters] = useState<Filters>(() => ({
+    ...EMPTY_FILTERS,
+    type: params.get('types') ?? params.get('type') ?? '',
+    from: isoToDateInput(params.get('from')),
+    to: isoToDateInput(params.get('to')),
+  }));
   const members = useMembers();
 
   const events = useQuery({

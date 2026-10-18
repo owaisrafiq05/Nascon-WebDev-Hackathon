@@ -3,6 +3,8 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 import { Button } from '../components/Button.js';
 import { useSession, useSignOut } from '../features/auth/session.js';
+import { LiveNotice } from '../features/realtime/LiveNotice.js';
+import { useRealtime } from '../features/realtime/use-realtime.js';
 
 /**
  * The frame around every signed-in page: workspace name, navigation, sign out.
@@ -13,11 +15,15 @@ import { useSession, useSignOut } from '../features/auth/session.js';
 export function AppShell() {
   const session = useSession();
   const signOut = useSignOut();
+  // One socket for the whole signed-in app; events refetch whatever is open.
+  const realtime = useRealtime();
 
   const permissions = session.data?.membership.permissions ?? [];
   const canSeeAudit = permissions.includes(PERMISSIONS.AUDIT_LOG_VIEW);
   const canSeeCrm = permissions.includes(PERMISSIONS.CRM_VIEW);
   const canConfigure = permissions.includes(PERMISSIONS.ASSIGNMENT_RULES_MANAGE);
+  const canManageMembers = permissions.includes(PERMISSIONS.MEMBERS_MANAGE);
+  const canManageIntegrations = permissions.includes(PERMISSIONS.INTEGRATIONS_MANAGE);
 
   const linkClass = ({ isActive }: { isActive: boolean }): string =>
     `rounded-md px-3 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:focus-visible:ring-slate-100 ${
@@ -49,10 +55,22 @@ export function AppShell() {
 
           <nav aria-label="Main" className="flex flex-wrap items-center gap-1">
             <NavLink to="/" end className={linkClass}>
-              Overview
+              Dashboard
             </NavLink>
             {canSeeCrm && (
               <>
+                <NavLink to="/leads" end className={linkClass}>
+                  Leads
+                </NavLink>
+                <NavLink to="/conversations" className={linkClass}>
+                  Conversations
+                </NavLink>
+                <NavLink to="/payments" className={linkClass}>
+                  Payments
+                </NavLink>
+                <NavLink to="/appointments" className={linkClass}>
+                  Appointments
+                </NavLink>
                 <NavLink to="/contacts" className={linkClass}>
                   Contacts
                 </NavLink>
@@ -63,6 +81,16 @@ export function AppShell() {
                   Lists
                 </NavLink>
               </>
+            )}
+            {canManageMembers && (
+              <NavLink to="/leads/manage" className={linkClass}>
+                Leads admin
+              </NavLink>
+            )}
+            {canManageIntegrations && (
+              <NavLink to="/integrations" className={linkClass}>
+                Integrations
+              </NavLink>
             )}
             {canConfigure && (
               <NavLink to="/configuration" className={linkClass}>
@@ -77,6 +105,9 @@ export function AppShell() {
                 Audit log
               </NavLink>
             )}
+            <NavLink to="/settings" className={linkClass}>
+              Settings
+            </NavLink>
             <Button
               type="button"
               variant="secondary"
@@ -95,6 +126,8 @@ export function AppShell() {
       <main id="main">
         <Outlet />
       </main>
+
+      <LiveNotice notice={realtime.notice} onDismiss={realtime.dismiss} />
     </div>
   );
 }

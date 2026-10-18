@@ -7,6 +7,8 @@ import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { ApiError, apiRequest } from '../../lib/api.js';
 import { useSession } from '../auth/session.js';
+import { OpportunityAppointments } from '../calendar/OpportunityAppointments.js';
+import { OpportunityPayments } from '../payments/OpportunityPayments.js';
 import { CustomFieldInputs } from './CustomFieldInputs.js';
 import {
   opportunitySchema,
@@ -226,6 +228,11 @@ export function OpportunityDetailPage() {
           </form>
         )}
       </section>
+
+      <OpportunityPayments opportunityId={record.id} defaultCurrency={record.currency} />
+      {canEdit && (
+        <OpportunityAppointments opportunityId={record.id} contactId={record.contactId} />
+      )}
     </div>
   );
 }

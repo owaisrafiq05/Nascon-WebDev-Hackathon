@@ -21,6 +21,8 @@ export class ApiError extends Error {
   readonly hint: string | undefined;
   readonly fields: FieldErrors | undefined;
   readonly requestId: string | undefined;
+  /** The server's `error.details`, e.g. the clashing intervals of a 409. */
+  readonly details: Record<string, unknown> | undefined;
 
   constructor(init: {
     code: string;
@@ -29,6 +31,7 @@ export class ApiError extends Error {
     hint?: string | undefined;
     fields?: FieldErrors | undefined;
     requestId?: string | undefined;
+    details?: Record<string, unknown> | undefined;
   }) {
     super(init.message);
     this.name = 'ApiError';
@@ -37,6 +40,7 @@ export class ApiError extends Error {
     this.hint = init.hint;
     this.fields = init.fields;
     this.requestId = init.requestId;
+    this.details = init.details;
   }
 }
 
@@ -71,6 +75,7 @@ function toApiError(status: number, body: unknown, requestId: string | undefined
     hint: parsed.data.error.hint,
     fields: isFieldErrors(fields) ? fields : undefined,
     requestId: parsed.data.requestId ?? requestId,
+    details: parsed.data.error.details,
   });
 }
 

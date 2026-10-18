@@ -6,6 +6,10 @@ import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
 import { useSession } from '../auth/session.js';
+import { AppointmentRow } from '../calendar/AppointmentRow.js';
+import { BookAppointmentForm } from '../calendar/BookAppointmentForm.js';
+import { ContactMessaging } from '../messaging/ContactMessaging.js';
+import { PaymentRow } from '../payments/PaymentRow.js';
 import { useAddNote, useCustomerView, type CustomerView } from './crm-api.js';
 
 /**
@@ -110,9 +114,9 @@ export function ContactDetailPage() {
 
       <Opportunities view={data} />
 
-      <PendingSection title="Conversations" section={data.conversations} />
-      <PendingSection title="Payments" section={data.payments} />
-      <PendingSection title="Appointments" section={data.appointments} />
+      <Conversations view={data} contactId={contactId} canEdit={canEdit} />
+      <Payments view={data} />
+      <Appointments view={data} contactId={contactId} canEdit={canEdit} />
 
       <Timeline view={data} contactId={contactId} canEdit={canEdit} />
     </div>
@@ -163,30 +167,114 @@ function Opportunities({ view }: { view: CustomerView }) {
   );
 }
 
-/**
- * A section whose provider is not connected yet.
- *
- * It says which phase brings it and why it is empty, so the page does not look
- * broken (Q10).
- */
-function PendingSection({
-  title,
-  section,
+/** A section heading with the shared look. */
+function SectionHeading({ id, children }: { id: string; children: string }) {
+  return (
+    <h2 id={id} className="text-base font-semibold text-slate-900 dark:text-slate-50">
+      {children}
+    </h2>
+  );
+}
+
+/** Says why a section is empty: nothing happened yet, or it is not connected (Q10). */
+function EmptySection({
+  reason,
+  fallback,
 }: {
-  title: string;
-  section: { items: unknown[]; availableFrom: string; reason: string };
+  reason: string | null | undefined;
+  fallback: string;
 }) {
   return (
-    <section aria-labelledby={`${title}-heading`} className="mt-8">
-      <h2
-        id={`${title}-heading`}
-        className="text-base font-semibold text-slate-900 dark:text-slate-50"
-      >
-        {title}
-      </h2>
-      <p className="mt-2 rounded-lg border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-600 dark:border-slate-600 dark:text-slate-400">
-        {section.reason}
-      </p>
+    <p className="mt-2 rounded-lg border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-600 dark:border-slate-600 dark:text-slate-400">
+      {reason ?? fallback}
+    </p>
+  );
+}
+
+function Conversations({
+  view,
+  contactId,
+  canEdit,
+}: {
+  view: CustomerView;
+  contactId: string;
+  canEdit: boolean;
+}) {
+  const section = view.conversations;
+  return (
+    <section aria-labelledby="conversations-heading" className="mt-8">
+      <SectionHeading id="conversations-heading">Conversations</SectionHeading>
+      {section.items.length === 0 ? (
+        <EmptySection reason={section.reason} fallback="No conversations yet." />
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {section.items.map((conversation) => (
+            <li
+              key={conversation.id}
+              className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <Link
+                to={`/conversations/${conversation.id}`}
+                className="font-medium text-slate-900 underline underline-offset-2 dark:text-slate-100"
+              >
+                {(conversation.channel ?? 'message').toUpperCase()} ·{' '}
+                {conversation.address ?? 'conversation'}
+              </Link>
+              <p className="text-sm break-words text-slate-600 dark:text-slate-400">
+                {conversation.lastMessagePreview ?? 'No messages'}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      {canEdit && (
+        <ContactMessaging contactId={contactId} optedOut={view.contact.optedOutOfMessaging} />
+      )}
+    </section>
+  );
+}
+
+function Payments({ view }: { view: CustomerView }) {
+  const section = view.payments;
+  return (
+    <section aria-labelledby="payments-heading" className="mt-8">
+      <SectionHeading id="payments-heading">Payments</SectionHeading>
+      {section.items.length === 0 ? (
+        <EmptySection reason={section.reason} fallback="No payments yet." />
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {section.items.map((payment) => (
+            <PaymentRow key={payment.id} payment={payment} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function Appointments({
+  view,
+  contactId,
+  canEdit,
+}: {
+  view: CustomerView;
+  contactId: string;
+  canEdit: boolean;
+}) {
+  const section = view.appointments;
+  return (
+    <section aria-labelledby="appointments-heading" className="mt-8">
+      <SectionHeading id="appointments-heading">Appointments</SectionHeading>
+      {section.items.length === 0 ? (
+        <EmptySection reason={section.reason} fallback="No appointments yet." />
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {section.items.map((appointment) => (
+            <AppointmentRow key={appointment.id} appointment={appointment} />
+          ))}
+        </ul>
+      )}
+      {canEdit && <BookAppointmentForm contactId={contactId} />}
     </section>
   );
 }

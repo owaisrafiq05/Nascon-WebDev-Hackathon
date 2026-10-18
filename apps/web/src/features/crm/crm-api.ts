@@ -9,6 +9,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { apiRequest } from '../../lib/api.js';
+import { appointmentSchema } from '../calendar/calendar-api.js';
+import { conversationSchema } from '../messaging/messaging-api.js';
+import { paymentSchema } from '../payments/payments-api.js';
 
 /**
  * The CRM's data layer (F2.1 - F2.8).
@@ -145,11 +148,13 @@ const activityEntrySchema = z.object({
 
 export type ActivityEntry = z.infer<typeof activityEntrySchema>;
 
-const pendingSectionSchema = z.object({
-  items: z.array(z.unknown()),
-  availableFrom: z.string(),
-  reason: z.string(),
-});
+/** A customer-view section: the items, plus why it is empty if it cannot be filled. */
+const sectionSchema = <TItem extends z.ZodType>(item: TItem) =>
+  z.object({
+    items: z.array(item),
+    availableFrom: z.string().nullish(),
+    reason: z.string().nullish(),
+  });
 
 export const customerViewSchema = z.object({
   contact: contactSchema.extend({ displayName: z.string() }),
@@ -170,9 +175,9 @@ export const customerViewSchema = z.object({
       pipelineName: z.string().nullable(),
     }),
   ),
-  conversations: pendingSectionSchema,
-  payments: pendingSectionSchema,
-  appointments: pendingSectionSchema,
+  conversations: sectionSchema(conversationSchema),
+  payments: sectionSchema(paymentSchema),
+  appointments: sectionSchema(appointmentSchema),
   activity: z.array(activityEntrySchema),
 });
 

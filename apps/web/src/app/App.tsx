@@ -7,12 +7,21 @@ import { SignInPage } from '../features/auth/SignInPage.js';
 import { SignUpPage } from '../features/auth/SignUpPage.js';
 import { useSession } from '../features/auth/session.js';
 import { AUDIT_PERMISSION, AuditPage } from '../features/audit/AuditPage.js';
+import { AppointmentsPage } from '../features/calendar/AppointmentsPage.js';
 import { ContactDetailPage } from '../features/crm/ContactDetailPage.js';
 import { ContactsPage } from '../features/crm/ContactsPage.js';
 import { CrmAdminPage } from '../features/crm/CrmAdminPage.js';
 import { ListsPage } from '../features/crm/ListsPage.js';
 import { OpportunityDetailPage } from '../features/crm/OpportunityDetailPage.js';
 import { PipelinePage } from '../features/crm/PipelinePage.js';
+import { IntegrationsPage } from '../features/integrations/IntegrationsPage.js';
+import { LeadsManagePage } from '../features/leads/LeadsManagePage.js';
+import { LeadsPage } from '../features/leads/LeadsPage.js';
+import { RecoveryPage } from '../features/leads/RecoveryPage.js';
+import { ConversationThreadPage } from '../features/messaging/ConversationThreadPage.js';
+import { ConversationsPage } from '../features/messaging/ConversationsPage.js';
+import { PaymentsPage } from '../features/payments/PaymentsPage.js';
+import { SettingsPage } from '../features/settings/SettingsPage.js';
 import { TeamPage } from '../features/team/TeamPage.js';
 import { HomePage } from '../pages/HomePage.js';
 import { AppShell } from './AppShell.js';
@@ -152,6 +161,74 @@ export function App() {
               to a member who lacks the permission, rather than redirecting away
               from a page they were told to open. */}
           <Route path="/configuration" element={<CrmAdminPage />} />
+
+          {/* Leads, messaging, payments and appointments (P4 - P9). The server
+              checks every endpoint; these guards only decide what renders. */}
+          <Route
+            path="/leads"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <LeadsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/leads/manage"
+            element={
+              <RequirePermission permission={PERMISSIONS.MEMBERS_MANAGE}>
+                <LeadsManagePage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/recovery"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <RecoveryPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/conversations"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <ConversationsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/conversations/:conversationId"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <ConversationThreadPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/payments"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <PaymentsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/appointments"
+            element={
+              <RequirePermission permission={PERMISSIONS.CRM_VIEW}>
+                <AppointmentsPage />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="/integrations"
+            element={
+              <RequirePermission permission={PERMISSIONS.INTEGRATIONS_MANAGE}>
+                <IntegrationsPage />
+              </RequirePermission>
+            }
+          />
+          <Route path="/settings" element={<SettingsPage />} />
 
           <Route path="/team" element={<TeamPage />} />
           <Route

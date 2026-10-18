@@ -12,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed": "tsx --env-file-if-exists=../../.env src/seed/index.ts"
+    "seed": "tsx --env-file-if-exists=../../.env src/seed/index.ts",
+    "check:integrations": "tsx --env-file-if-exists=../../.env src/scripts/check-integrations.ts"
   },
   "dependencies": {
     "@ubmp/domain": "workspace:*",

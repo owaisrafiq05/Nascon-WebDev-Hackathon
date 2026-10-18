@@ -212,6 +212,27 @@ but refuses to connect anything.
 `pnpm seed` connects the demo workspace automatically when the Twilio, Stripe
 or Telegram variables are present in `.env`.
 
+#### Checking live credentials
+
+Once real sandbox credentials are in `.env`, run:
+
+```bash
+pnpm check:integrations
+```
+
+It makes one read-only call per provider (Twilio account fetch, Stripe balance,
+Telegram `getMe`) and prints `OK`, `FAIL` or `SKIP` with the reason, for
+example `SKIP twilio: missing TWILIO_AUTH_TOKEN`. Google is checked offline: the
+three `GOOGLE_OAUTH_*` variables must be set, and the shape of the consent URL
+is printed. It also checks that `ENCRYPTION_KEY` decodes to 32 bytes and that
+`PUBLIC_BASE_URL` is https. A Stripe live key (`sk_live_`) is refused. The exit
+code is non-zero if anything fails, and secrets are never printed (at most their
+last four characters).
+
+Nothing is sent unless you ask. Add `--send-telegram <chatId>` to send one test
+message from the bot, and `--twilio-to <number>` (for example `+923001234567`)
+to send one test message from the Twilio sender.
+
 ### Demo accounts (`pnpm seed`)
 
 Password for all: `demo-password-123`. Acme Solar: `owner@acme.test`,

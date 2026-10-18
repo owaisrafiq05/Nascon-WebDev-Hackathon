@@ -27,6 +27,7 @@
     "db:logs": "docker compose logs -f mongo",
     "clean": "pnpm -r exec rm -rf dist coverage .vite *.tsbuildinfo",
     "seed": "pnpm --filter @ubmp/server seed",
+    "check:integrations": "pnpm --filter @ubmp/server check:integrations",
     "e2e": "pnpm --filter @ubmp/web e2e"
   },
   "devDependencies": {

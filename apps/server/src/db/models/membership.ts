@@ -27,6 +27,10 @@ export interface MembershipDoc {
   availabilityStatus: AvailabilityStatus;
   /** Denormalised for the assignment engine's max-open-leads rule (F3.3). */
   openLeadCount: number;
+  /** Where this employee's escalation alerts go (I4.3). */
+  telegramChatId: string | null;
+  /** Dashboard tiles this member has hidden (F5.5), stored server-side. */
+  dashboardHiddenTiles: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +44,8 @@ const membershipSchema = new Schema<MembershipDoc>(
     extraPermissions: { type: [String], default: [], enum: ASSIGNABLE_PERMISSIONS },
     availabilityStatus: { type: String, enum: AVAILABILITY_STATUSES, default: 'offline' },
     openLeadCount: { type: Number, default: 0, min: 0 },
+    telegramChatId: { type: String, default: null, maxlength: 64 },
+    dashboardHiddenTiles: { type: [String], default: [] },
   },
   { timestamps: true },
 );

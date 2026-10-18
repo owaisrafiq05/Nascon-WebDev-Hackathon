@@ -1,4 +1,4 @@
-import { runDueJobs } from '@ubmp/server/jobs';
+import { loadIntegrationsConfig, runDueJobs } from '@ubmp/server/jobs';
 import mongoose from 'mongoose';
 
 import { loadWorkerConfig } from './config.js';
@@ -17,6 +17,8 @@ import { createTicker } from './ticker.js';
 async function main(): Promise<void> {
   const config = loadWorkerConfig();
   const logger = createLogger(config);
+  // Escalation alerts need the encryption key and the web address (F3.9, I4.2).
+  const integrations = loadIntegrationsConfig();
 
   mongoose.set('strictQuery', true);
   await mongoose.connect(config.mongoUri, { serverSelectionTimeoutMS: 10_000 });
@@ -26,7 +28,7 @@ async function main(): Promise<void> {
     intervalMs: config.heartbeatMs,
     runImmediately: true,
     onTick: async ({ tick }) => {
-      const results = await runDueJobs({ maxJobs: 50 });
+      const results = await runDueJobs({ maxJobs: 50, integrations });
 
       if (results.length === 0) {
         // Debug, so an idle worker does not fill the log.
@@ -40,7 +42,12 @@ async function main(): Promise<void> {
           jobs: results.length,
           outcomes: results.map((result) => ({
             type: result.type,
-            reason: 'reason' in result.outcome ? result.outcome.reason : 'handled',
+            reason:
+              'reason' in result.outcome
+                ? result.outcome.reason
+                : 'delivery' in result.outcome
+                  ? result.outcome.delivery
+                  : 'handled',
           })),
         },
         'ran scheduled jobs',

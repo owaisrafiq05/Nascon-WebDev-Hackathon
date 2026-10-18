@@ -4,7 +4,14 @@ import type { Types } from 'mongoose';
 
 import type { ScheduledJobDoc } from '../db/models/scheduled-job.js';
 import { claimDueJob, completeJob, failJob, type ClaimOptions } from '../repositories/job-queue.js';
+import type { IntegrationsConfig } from '../config.js';
 import { escalateLead, type EscalationOutcome } from './lead-service.js';
+import {
+  deliverNotification,
+  NOTIFICATION_MAX_ATTEMPTS,
+  NOTIFICATION_RETRY_DELAY_MS,
+  type DeliveryOutcome,
+} from './notification-service.js';
 
 /**
  * Runs due scheduled jobs (Q5, F3.8).
@@ -16,7 +23,8 @@ import { escalateLead, type EscalationOutcome } from './lead-service.js';
 export interface RunJobResult {
   readonly jobId: string;
   readonly type: ScheduledJobDoc['type'];
-  readonly outcome: EscalationOutcome | { readonly handled: false };
+  readonly outcome:
+    EscalationOutcome | { readonly delivery: DeliveryOutcome } | { readonly handled: false };
 }
 
 function assignmentVersionOf(job: ScheduledJobDoc): number {
@@ -30,8 +38,28 @@ function assignmentVersionOf(job: ScheduledJobDoc): number {
  * A failure releases the lease and schedules a retry rather than losing the
  * timer, because a lost escalation is the failure this phase exists to prevent.
  */
-export async function runJob(job: ScheduledJobDoc, now: Date = new Date()): Promise<RunJobResult> {
+export async function runJob(
+  job: ScheduledJobDoc,
+  now: Date = new Date(),
+  integrations: IntegrationsConfig | null = null,
+): Promise<RunJobResult> {
   try {
+    if (job.type === 'notification.send') {
+      if (integrations === null) throw new Error('notification jobs need the integrations config');
+      const delivery = await deliverNotification(job.targetId, integrations);
+      if (delivery === 'retry' || delivery === 'failed') {
+        // Released for a later attempt, or marked failed once attempts run out;
+        // the notification row carries the reason for Admins (I4.4).
+        await failJob(job._id, new Error('alert delivery failed, retrying'), {
+          maxAttempts: NOTIFICATION_MAX_ATTEMPTS,
+          retryDelayMs: NOTIFICATION_RETRY_DELAY_MS,
+        });
+      } else {
+        await completeJob(job._id);
+      }
+      return { jobId: job._id.toString(), type: job.type, outcome: { delivery } };
+    }
+
     if (job.type === 'lead.escalate') {
       const outcome = await escalateLead(job.targetId, assignmentVersionOf(job), now);
 
@@ -55,16 +83,21 @@ export async function runJob(job: ScheduledJobDoc, now: Date = new Date()): Prom
  * The claim is atomic, so two callers racing here cannot both get the same job:
  * one wins the `findOneAndUpdate`, the other sees it locked and moves on.
  */
-export async function claimAndRunOne(options: ClaimOptions = {}): Promise<RunJobResult | null> {
+export interface RunOptions extends ClaimOptions {
+  /** Needed for notification jobs; the worker passes its loaded config. */
+  readonly integrations?: IntegrationsConfig | null | undefined;
+}
+
+export async function claimAndRunOne(options: RunOptions = {}): Promise<RunJobResult | null> {
   const job = await claimDueJob({ claimerId: options.claimerId ?? randomUUID(), ...options });
   if (job === null) return null;
 
-  return runJob(job, options.now ?? new Date());
+  return runJob(job, options.now ?? new Date(), options.integrations ?? null);
 }
 
 /** Drains the queue, bounded so a tick cannot run for ever. */
 export async function runDueJobs(
-  options: ClaimOptions & { maxJobs?: number } = {},
+  options: RunOptions & { maxJobs?: number } = {},
 ): Promise<readonly RunJobResult[]> {
   const maxJobs = options.maxJobs ?? 50;
   const results: RunJobResult[] = [];
@@ -79,3 +112,4 @@ export async function runDueJobs(
 }
 
 export type { Types };
+export { loadIntegrationsConfig } from '../config.js';

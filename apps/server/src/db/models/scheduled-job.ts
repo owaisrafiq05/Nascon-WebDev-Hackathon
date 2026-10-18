@@ -17,7 +17,7 @@ import { model, Schema, type Types } from 'mongoose';
  *     scheduling the same escalation twice inserts once. A duplicate schedule
  *     therefore cannot double-escalate.
  */
-export const JOB_TYPES = ['lead.escalate', 'lead.recovery_sweep'] as const;
+export const JOB_TYPES = ['lead.escalate', 'lead.recovery_sweep', 'notification.send'] as const;
 export type JobType = (typeof JOB_TYPES)[number];
 
 export const JOB_STATUSES = ['pending', 'running', 'done', 'failed', 'cancelled'] as const;

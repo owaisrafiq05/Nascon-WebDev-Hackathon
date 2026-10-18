@@ -21,7 +21,7 @@ async function signUp(page: Page, company: string): Promise<void> {
   await page.getByLabel('Email').fill(uniqueEmail('crm-owner'));
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Create workspace' }).click();
-  await expect(page.getByText(company)).toBeVisible();
+  await expect(page.getByText(company).filter({ visible: true }).first()).toBeVisible();
 }
 
 test('an admin can add a custom field and it appears on the contact form (F2.2)', async ({
@@ -38,7 +38,9 @@ test('an admin can add a custom field and it appears on the contact form (F2.2)'
   await fields.getByLabel('Type').selectOption('text');
   await fields.getByRole('button', { name: 'Add field' }).click();
 
-  await expect(page.getByRole('status')).toContainText('appears on forms immediately');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'appears on forms immediately' }),
+  ).toBeVisible();
 
   // The new field is on the contact form without a reload of the application.
   await page.getByRole('link', { name: 'Contacts' }).click();
@@ -76,7 +78,7 @@ test('a stage-required field blocks the move with a clear message (F2.4)', async
   await fields.getByLabel('Type').selectOption('number');
   await fields.getByRole('checkbox', { name: 'Proposal' }).check();
   await fields.getByRole('button', { name: 'Add field' }).click();
-  await expect(page.getByRole('status')).toContainText('Field added');
+  await expect(page.getByRole('status').filter({ hasText: 'Field added' })).toBeVisible();
 });
 
 test('a saved list updates as a record changes (F2.6)', async ({ page }) => {

@@ -29,12 +29,12 @@ test('an owner can sign up, invite a colleague and read the audit log', async ({
   await page.getByRole('button', { name: 'Create workspace' }).click();
 
   // Landed signed in, with the workspace shown in the header.
-  await expect(page.getByText('Smoke Test Co')).toBeVisible();
-  await expect(page.getByText(ownerEmail)).toBeVisible();
+  await expect(page.getByText('Smoke Test Co').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByText(ownerEmail).filter({ visible: true }).first()).toBeVisible();
 
   // --- A refresh keeps the session (F1.1)
   await page.reload();
-  await expect(page.getByText('Smoke Test Co')).toBeVisible();
+  await expect(page.getByText('Smoke Test Co').filter({ visible: true }).first()).toBeVisible();
 
   // --- Invite a colleague (F1.2)
   await page.getByRole('link', { name: 'Team' }).click();
@@ -46,7 +46,9 @@ test('an owner can sign up, invite a colleague and read the audit log', async ({
   await inviteForm.getByLabel('Level').selectOption('user');
   await inviteForm.getByRole('button', { name: 'Send invitation' }).click();
 
-  await expect(page.getByRole('status')).toContainText(`Invitation created for ${inviteeEmail}`);
+  await expect(
+    page.getByRole('status').filter({ hasText: `Invitation created for ${inviteeEmail}` }),
+  ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Pending invitations' })).toBeVisible();
   await expect(page.getByText(inviteeEmail).first()).toBeVisible();
 
@@ -84,7 +86,7 @@ test('the audit log is hidden from a member without the permission (F4.2)', asyn
   await page.getByLabel('Email').fill(ownerEmail);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Create workspace' }).click();
-  await expect(page.getByText('Hidden Audit Co')).toBeVisible();
+  await expect(page.getByText('Hidden Audit Co').filter({ visible: true }).first()).toBeVisible();
 
   // Invite a plain User, who gets the seeded Member set without audit access.
   await page.getByRole('link', { name: 'Team' }).click();
@@ -93,8 +95,8 @@ test('the audit log is hidden from a member without the permission (F4.2)', asyn
   await inviteForm.getByLabel('Level').selectOption('user');
   await inviteForm.getByRole('button', { name: 'Send invitation' }).click();
 
-  const notice = page.getByRole('status');
-  await expect(notice).toContainText(memberEmail);
+  const notice = page.getByRole('status').filter({ hasText: memberEmail });
+  await expect(notice).toBeVisible();
 
   // Take the invitation link out of the notice and accept it.
   const link = await notice.getByRole('code').innerText();
@@ -114,7 +116,7 @@ test('the audit log is hidden from a member without the permission (F4.2)', asyn
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  await expect(page.getByText('Hidden Audit Co')).toBeVisible();
+  await expect(page.getByText('Hidden Audit Co').filter({ visible: true }).first()).toBeVisible();
 
   // No navigation entry, and the route itself redirects away.
   await expect(page.getByRole('link', { name: 'Audit log' })).toHaveCount(0);

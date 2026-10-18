@@ -22,11 +22,11 @@ integration row is code-complete and fake-tested but **not yet live-verified**.
 
 ## F2. Customizable CRM — P3
 
-| ID          | Status | Where                                                                           |
-| ----------- | ------ | ------------------------------------------------------------------------------- |
-| F2.1 – F2.6 | done   | `crm-service.ts`, `pipeline-service.ts`, `saved-lists.ts`                       |
-| F2.7        | done   | `activity-repository.ts`; messages, payments and appointments now write entries |
-| F2.8        | done   | `customer-view-service.ts` now fills conversations, payments, appointments      |
+| ID          | Status | Where                                                                                |
+| ----------- | ------ | ------------------------------------------------------------------------------------ |
+| F2.1 – F2.6 | done   | `crm-service.ts`, `pipeline-service.ts`, `saved-lists.ts`                            |
+| F2.7        | done   | `activity-repository.ts`; messages, payments and appointments now write entries      |
+| F2.8        | done   | `customer-view-service.ts` fills conversations, payments, appointments; e2e opens it |
 
 ## F3. Leads — P1 rules, P4 wiring, P10 alerts
 
@@ -69,8 +69,8 @@ integration connect/update/disconnect audited without secrets.
 | Q1, Q2, Q3, Q6, Q13, Q14 | done    |                                                                                    |
 | Q4                       | done    | version checks on leads, opportunities, appointments, payments                     |
 | Q5                       | done    | leases, idempotency keys, provider event claims inside transactions                |
-| Q7                       | partial | new screens use wrapping layouts; no automated 360/768/1280 sweep yet              |
-| Q8                       | partial | labelled fields, words + colour statuses, keyboard alternatives; no full audit yet |
+| Q7                       | done    | `e2e/responsive.spec.ts`: every screen at 360, 768, 1280 px, no sideways scroll    |
+| Q8                       | partial | sweep checks every control has a name; no contrast or full keyboard audit yet      |
 | Q9                       | done    | every new list paginated (default 25, max 100)                                     |
 | Q10                      | done    | every action shows loading, success and error; provider errors explained           |
 | Q11                      | done    | Socket.IO + outbox relay; live-verified that a created lead reaches another socket |
@@ -78,5 +78,8 @@ integration connect/update/disconnect audited without secrets.
 
 ## Known gaps
 
-- No Playwright flows yet for leads, dashboard, messaging, payments, calendar.
+- Playwright covers accounts, CRM, leads, realtime, dashboard and the
+  integration screens without credentials. Messaging, payment and calendar
+  flows that need a live provider are covered by API tests against fakes only.
 - Integrations not yet exercised against real sandboxes (credentials needed).
+  `pnpm check:integrations` verifies credentials once they are in `.env`.

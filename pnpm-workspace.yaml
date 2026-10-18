@@ -8,11 +8,13 @@ linkWorkspacePackages: true
 strictPeerDependencies: false
 autoInstallPeers: true
 
-# pnpm blocks dependency install scripts by default. These two need one:
+# pnpm blocks dependency install scripts by default. These need one:
+#   argon2                compiles its native password-hashing binding
 #   esbuild               fetches its platform binary
 #   mongodb-memory-server fetches the mongod used by the server's database tests
 # Anything not listed here cannot run a script at install time.
 allowBuilds:
+  argon2: true
   esbuild: true
   mongodb-memory-server: true
 

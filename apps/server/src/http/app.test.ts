@@ -4,20 +4,12 @@ import { pino } from 'pino';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
-import type { ServerConfig } from '../config.js';
+import { testConfig } from '../test/harness.js';
 import { createApp } from './app.js';
 
 const silentLogger = pino({ level: 'silent' });
 
-const config: ServerConfig = {
-  env: 'test',
-  isProduction: false,
-  logLevel: 'silent' as ServerConfig['logLevel'],
-  port: 0,
-  mongoUri: 'mongodb://localhost:27017/ubmp-test',
-  webOrigins: ['http://localhost:5173'],
-  jsonBodyLimit: '1mb',
-};
+const config = testConfig({ mongoUri: 'mongodb://localhost:27017/ubmp-test' });
 
 const app = createApp({ config, logger: silentLogger, version: '0.0.0-test' });
 

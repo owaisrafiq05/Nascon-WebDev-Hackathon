@@ -4,8 +4,8 @@ import { pino } from 'pino';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import type { ServerConfig } from '../config.js';
 import { connectToDatabase, disconnectFromDatabase } from '../db/mongoose.js';
+import { testConfig } from '../test/harness.js';
 import { createApp } from './app.js';
 
 /**
@@ -16,15 +16,7 @@ const logger = pino({ level: 'silent' });
 
 let mongod: MongoMemoryServer;
 
-const config: ServerConfig = {
-  env: 'test',
-  isProduction: false,
-  logLevel: 'silent' as ServerConfig['logLevel'],
-  port: 0,
-  mongoUri: '',
-  webOrigins: ['http://localhost:5173'],
-  jsonBodyLimit: '1mb',
-};
+const config = testConfig();
 
 const app = createApp({ config, logger, version: '0.0.0-test' });
 

@@ -8,7 +8,7 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
 }
 
 export const CONTROL_CLASS =
-  'rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:border-slate-900 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus-visible:border-slate-100 dark:focus-visible:ring-slate-100';
+  'min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors duration-150 focus-visible:border-navy focus-visible:ring-2 focus-visible:ring-navy focus-visible:outline-none disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus-visible:border-brass-bright dark:focus-visible:ring-brass-bright';
 
 export function Select({ label, hint, hideLabel = false, children, ...select }: SelectProps) {
   const id = useId();

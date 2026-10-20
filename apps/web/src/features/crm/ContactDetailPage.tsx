@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { BACK_LINK, KICKER_CLASS } from '../../components/ui.js';
 import { useSession } from '../auth/session.js';
 import { AppointmentRow } from '../calendar/AppointmentRow.js';
 import { BookAppointmentForm } from '../calendar/BookAppointmentForm.js';
@@ -57,14 +58,15 @@ export function ContactDetailPage() {
       <p className="text-sm">
         <Link
           to="/contacts"
-          className="text-slate-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-400"
+          className={BACK_LINK}
         >
           ← Contacts
         </Link>
       </p>
 
       <header className="mt-3">
-        <h1 className="text-2xl font-bold break-words text-slate-900 dark:text-slate-50">
+        <p className={KICKER_CLASS}>Records</p>
+        <h1 className="mt-1 text-2xl font-semibold break-words text-slate-900 sm:text-3xl dark:text-slate-50">
           {data.contact.displayName}
         </h1>
         <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-600 dark:text-slate-400">

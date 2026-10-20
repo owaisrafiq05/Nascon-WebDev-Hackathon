@@ -25,7 +25,10 @@ import {
 export function LeadsManagePage() {
   return (
     <PageContainer>
-      <PageTitle sub="Who can take leads, what needs rescuing, and how leads are routed.">
+      <PageTitle
+        kicker="Workspace"
+        sub="Who can take leads, what needs rescuing, and how leads are routed."
+      >
         Leads admin
       </PageTitle>
 

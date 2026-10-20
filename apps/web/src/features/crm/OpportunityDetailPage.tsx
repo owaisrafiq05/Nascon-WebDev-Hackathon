@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
+import { BACK_LINK, KICKER_CLASS, SURFACE } from '../../components/ui.js';
 import { ApiError, apiRequest } from '../../lib/api.js';
 import { useSession } from '../auth/session.js';
 import { OpportunityAppointments } from '../calendar/OpportunityAppointments.js';
@@ -93,13 +94,14 @@ export function OpportunityDetailPage() {
       <p className="text-sm">
         <Link
           to="/pipeline"
-          className="text-slate-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-400"
+          className={BACK_LINK}
         >
           ← Pipeline
         </Link>
       </p>
 
-      <h1 className="mt-3 text-2xl font-bold break-words text-slate-900 dark:text-slate-50">
+      <p className={`mt-3 ${KICKER_CLASS}`}>Records</p>
+      <h1 className="mt-1 text-2xl font-semibold break-words text-slate-900 sm:text-3xl dark:text-slate-50">
         {record.name}
       </h1>
 
@@ -140,7 +142,7 @@ export function OpportunityDetailPage() {
       {canEdit && pipeline !== undefined && (
         <section
           aria-labelledby="stage-heading"
-          className="mt-8 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+          className={`mt-8 ${SURFACE} p-5`}
         >
           <h2
             id="stage-heading"
@@ -178,7 +180,7 @@ export function OpportunityDetailPage() {
 
       <section
         aria-labelledby="fields-heading"
-        className="mt-8 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+        className={`mt-8 ${SURFACE} p-5`}
       >
         <h2
           id="fields-heading"

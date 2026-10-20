@@ -17,7 +17,9 @@ import {
 export function SettingsPage() {
   return (
     <PageContainer>
-      <PageTitle sub="Your own calendar and alert settings.">Settings</PageTitle>
+      <PageTitle kicker="Workspace" sub="Your own calendar and alert settings.">
+        Settings
+      </PageTitle>
       <CalendarSection />
       <NotificationsSection />
     </PageContainer>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { PageTitle, SURFACE } from '../../components/ui.js';
 import { ApiError } from '../../lib/api.js';
 import { useSession } from '../auth/session.js';
 import {
@@ -41,21 +42,24 @@ export function CrmAdminPage() {
   if (!canConfigure) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Configuration</h1>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-          You need the “manage assignment rules” permission to change pipelines and fields. Ask an
-          Owner or Admin to grant it.
-        </p>
+        <PageTitle
+          kicker="Workspace"
+          sub="You need the “manage assignment rules” permission to change pipelines and fields. Ask an Owner or Admin to grant it."
+        >
+          Configuration
+        </PageTitle>
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Configuration</h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-        Fields and pipelines are specific to this workspace, and changes apply immediately.
-      </p>
+      <PageTitle
+        kicker="Workspace"
+        sub="Fields and pipelines are specific to this workspace, and changes apply immediately."
+      >
+        Configuration
+      </PageTitle>
 
       <div aria-live="polite" className="mt-4">
         <Alert error={pipelines.error} />
@@ -106,7 +110,7 @@ function NewPipeline() {
   return (
     <section
       aria-labelledby="new-pipeline-heading"
-      className="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+      className={`mt-6 ${SURFACE} p-5`}
     >
       <h2
         id="new-pipeline-heading"
@@ -497,7 +501,7 @@ function CustomFieldAdmin({ pipeline }: { pipeline: Pipeline }) {
 
       <form
         noValidate
-        className="mt-5 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+        className={`mt-5 flex flex-col gap-4 ${SURFACE} p-5`}
         onSubmit={(event) => {
           event.preventDefault();
           const options = draft.options

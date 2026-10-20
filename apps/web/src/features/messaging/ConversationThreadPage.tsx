@@ -5,7 +5,7 @@ import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Pager } from '../../components/Pager.js';
 import { TextArea } from '../../components/TextArea.js';
-import { Badge, Loading, MUTED, PageContainer } from '../../components/ui.js';
+import { BACK_LINK, Badge, KICKER_CLASS, Loading, MUTED, PageContainer } from '../../components/ui.js';
 import { formatDateTime } from '../../lib/format.js';
 import {
   MESSAGE_STATUS_LABELS,
@@ -56,14 +56,12 @@ export function ConversationThreadPage() {
   return (
     <PageContainer>
       <p className="text-sm">
-        <Link
-          to="/conversations"
-          className="text-slate-600 underline-offset-2 hover:underline dark:text-slate-400"
-        >
+        <Link to="/conversations" className={BACK_LINK}>
           ← Conversations
         </Link>
       </p>
-      <h1 className="mt-3 text-2xl font-bold break-words text-slate-900 dark:text-slate-50">
+      <p className={`mt-3 ${KICKER_CLASS}`}>Work</p>
+      <h1 className="mt-1 text-2xl font-semibold break-words text-slate-900 sm:text-3xl dark:text-slate-50">
         {conversation.contactName ?? conversation.address ?? 'Conversation'}
       </h1>
       <p className={MUTED}>
@@ -174,8 +172,8 @@ function MessageItem({
     <li
       className={`max-w-full rounded-lg border px-4 py-3 sm:max-w-[85%] ${
         inbound
-          ? 'self-start border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
-          : 'self-end border-slate-300 bg-slate-100 dark:border-slate-600 dark:bg-slate-800'
+          ? 'self-start border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900'
+          : 'self-end border-navy border-l-4 bg-[#FBF6EC] dark:border-brass-bright dark:bg-slate-800'
       }`}
     >
       <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">

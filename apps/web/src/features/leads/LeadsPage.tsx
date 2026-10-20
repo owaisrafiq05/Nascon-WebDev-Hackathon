@@ -57,7 +57,10 @@ export function LeadsPage() {
 
   return (
     <PageContainer>
-      <PageTitle sub="Leads assigned to you. Acknowledge each one before its timer runs out.">
+      <PageTitle
+        kicker="Work"
+        sub="Leads assigned to you. Acknowledge each one before its timer runs out."
+      >
         Leads
       </PageTitle>
 

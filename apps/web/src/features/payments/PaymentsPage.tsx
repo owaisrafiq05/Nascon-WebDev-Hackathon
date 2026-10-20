@@ -30,7 +30,10 @@ export function PaymentsPage() {
 
   return (
     <PageContainer>
-      <PageTitle sub="Money collected is shown separately from money still expected.">
+      <PageTitle
+        kicker="Work"
+        sub="Money collected is shown separately from money still expected."
+      >
         Payments
       </PageTitle>
 
@@ -43,7 +46,7 @@ export function PaymentsPage() {
               <dt className="text-sm font-medium text-slate-600 dark:text-slate-400">
                 Collected (net)
               </dt>
-              <dd className="text-2xl font-bold text-slate-900 dark:text-slate-50">
+              <dd className="font-mono text-2xl font-semibold tracking-tight text-slate-900 tabular-nums dark:text-slate-50">
                 {formatMoney(summary.data.collected.net, summary.data.currency)}
               </dd>
               <dd className="text-xs text-slate-600 dark:text-slate-400">
@@ -56,7 +59,7 @@ export function PaymentsPage() {
               <dt className="text-sm font-medium text-slate-600 dark:text-slate-400">
                 Projected (not yet collected)
               </dt>
-              <dd className="text-2xl font-bold text-slate-900 dark:text-slate-50">
+              <dd className="font-mono text-2xl font-semibold tracking-tight text-slate-900 tabular-nums dark:text-slate-50">
                 {formatMoney(summary.data.projected.total, summary.data.currency)}
               </dd>
               <dd className="text-xs text-slate-600 dark:text-slate-400">

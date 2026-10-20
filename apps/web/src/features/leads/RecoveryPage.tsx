@@ -5,7 +5,10 @@ import { RecoveryQueue } from './RecoveryQueue.js';
 export function RecoveryPage() {
   return (
     <PageContainer>
-      <PageTitle sub="Leads that were escalated repeatedly, have no owner, or went quiet.">
+      <PageTitle
+        kicker="Work"
+        sub="Leads that were escalated repeatedly, have no owner, or went quiet."
+      >
         Recovery queue
       </PageTitle>
       <Card id="recovery">

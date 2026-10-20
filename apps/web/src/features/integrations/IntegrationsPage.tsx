@@ -20,7 +20,10 @@ export function IntegrationsPage() {
 
   return (
     <PageContainer wide>
-      <PageTitle sub="Connect the services the platform sends messages, payments and alerts through.">
+      <PageTitle
+        kicker="Workspace"
+        sub="Connect the services the platform sends messages, payments and alerts through."
+      >
         Integrations
       </PageTitle>
 

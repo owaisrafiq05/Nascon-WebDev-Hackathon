@@ -4,7 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Alert } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { KICKER_CLASS } from '../../components/ui.js';
 import { ApiError } from '../../lib/api.js';
+import { AUTH_LINK, AuthFrame } from './AuthFrame.js';
 import { useSignUp } from './session.js';
 
 /**
@@ -67,8 +69,15 @@ export function SignUpPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Create a workspace</h1>
+    <AuthFrame
+      kicker="New workspace"
+      headline="Open a company desk."
+      lede="You become the Owner. Invite the team once the workspace exists."
+    >
+      <p className={KICKER_CLASS}>Account</p>
+      <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
+        Create a workspace
+      </h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
         You will be its Owner, and can invite your team afterwards.
       </p>
@@ -140,13 +149,10 @@ export function SignUpPage() {
 
       <p className="mt-6 text-sm text-slate-600 dark:text-slate-400">
         Already have an account?{' '}
-        <Link
-          to="/sign-in"
-          className="font-medium text-slate-900 underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-100"
-        >
+        <Link to="/sign-in" className={AUTH_LINK}>
           Sign in
         </Link>
       </p>
-    </div>
+    </AuthFrame>
   );
 }

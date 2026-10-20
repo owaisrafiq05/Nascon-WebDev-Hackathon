@@ -84,10 +84,10 @@ export function PipelineBoard({ pipeline, canEdit }: PipelineBoardProps) {
             <section
               key={stage.id}
               aria-labelledby={`stage-${stage.id}`}
-              className={`flex min-w-0 flex-col gap-2 rounded-xl border p-3 md:w-72 md:shrink-0 ${
+              className={`flex min-w-0 flex-col gap-2 rounded-lg border p-3 transition-colors duration-150 md:w-72 md:shrink-0 ${
                 isDropTarget
-                  ? 'border-slate-900 bg-slate-100 dark:border-slate-100 dark:bg-slate-800'
-                  : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
+                  ? 'border-brass bg-[#FBF6EC] dark:border-brass-bright dark:bg-slate-800'
+                  : 'border-slate-300 bg-slate-100/80 dark:border-slate-700 dark:bg-slate-900'
               }`}
               onDragOver={(event) => {
                 if (!canEdit || draggingId === null) return;
@@ -113,11 +113,11 @@ export function PipelineBoard({ pipeline, canEdit }: PipelineBoardProps) {
               <header className="flex items-baseline justify-between gap-2">
                 <h3
                   id={`stage-${stage.id}`}
-                  className="text-sm font-semibold text-slate-900 dark:text-slate-50"
+                  className="font-mono text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50"
                 >
                   {stage.name}
                 </h3>
-                <span className="text-xs text-slate-600 dark:text-slate-400">
+                <span className="rounded-sm bg-white px-1.5 py-0.5 font-mono text-xs text-slate-600 tabular-nums dark:bg-slate-800 dark:text-slate-300">
                   {cards.length}
                   {/* The outcome is spelled out, not conveyed by colour (Q8). */}
                   {stage.outcome !== 'open' && ` · ${stage.outcome}`}
@@ -136,13 +136,13 @@ export function PipelineBoard({ pipeline, canEdit }: PipelineBoardProps) {
                       setDraggingId(null);
                       setDropTargetStageId(null);
                     }}
-                    className={`rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800 ${
+                    className={`rounded-md border border-slate-200 bg-white p-3 shadow-[0_1px_0_rgba(26,22,18,0.04)] transition-colors duration-150 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-500 ${
                       draggingId === opportunity.id ? 'opacity-50' : ''
                     }`}
                   >
                     <Link
                       to={`/opportunities/${opportunity.id}`}
-                      className="block font-medium break-words text-slate-900 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-100"
+                      className="block font-medium break-words text-slate-900 underline decoration-brass-bright decoration-2 underline-offset-4 focus-visible:ring-2 focus-visible:ring-navy focus-visible:outline-none dark:text-slate-100 dark:focus-visible:ring-brass-bright"
                     >
                       {opportunity.name}
                     </Link>

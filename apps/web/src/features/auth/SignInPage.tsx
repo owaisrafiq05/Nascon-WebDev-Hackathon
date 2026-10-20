@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Alert } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { KICKER_CLASS } from '../../components/ui.js';
+import { AUTH_LINK, AuthFrame } from './AuthFrame.js';
 import { useSignIn } from './session.js';
 
 /**
@@ -24,8 +26,13 @@ export function SignInPage() {
   const missingPassword = values.password === '';
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Sign in</h1>
+    <AuthFrame
+      kicker="Sign in"
+      headline="The desk is open."
+      lede="Leads, pipeline, payments, and the audit trail, kept in one workspace."
+    >
+      <p className={KICKER_CLASS}>Account</p>
+      <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">Sign in</h1>
 
       <form
         noValidate
@@ -76,13 +83,10 @@ export function SignInPage() {
 
       <p className="mt-6 text-sm text-slate-600 dark:text-slate-400">
         Need a workspace?{' '}
-        <Link
-          to="/sign-up"
-          className="font-medium text-slate-900 underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-100"
-        >
+        <Link to="/sign-up" className={AUTH_LINK}>
           Create one
         </Link>
       </p>
-    </div>
+    </AuthFrame>
   );
 }

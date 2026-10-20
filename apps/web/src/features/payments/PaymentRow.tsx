@@ -18,7 +18,7 @@ export function PaymentRow({ payment, canSend = true }: { payment: Payment; canS
   const symbol = payment.status === 'paid' ? '✓' : payment.status === 'failed' ? '!' : '•';
 
   return (
-    <li className="rounded-lg border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+    <li className="rounded-lg border border-slate-300 bg-white px-4 py-3 shadow-[0_1px_0_rgba(26,22,18,0.04)] transition-colors duration-150 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-500">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-medium text-slate-900 dark:text-slate-100">
           {formatMoney(payment.amount, payment.currency)}

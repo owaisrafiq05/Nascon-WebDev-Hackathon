@@ -33,14 +33,11 @@ export function SystemStatusCard() {
   const { data, error, isPending, isFetching, refetch } = useHealth();
 
   return (
-    <section
-      aria-labelledby="system-status-heading"
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-900"
-    >
+    <section aria-labelledby="system-status-heading" className="max-w-xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2
           id="system-status-heading"
-          className="text-base font-semibold text-slate-900 dark:text-slate-50"
+          className="font-mono text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50"
         >
           API status
         </h2>
@@ -48,7 +45,7 @@ export function SystemStatusCard() {
           type="button"
           onClick={() => void refetch()}
           disabled={isFetching}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus-visible:ring-slate-100"
+          className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 dark:focus-visible:ring-brass-bright"
         >
           {isFetching ? 'Checking…' : 'Check again'}
         </button>

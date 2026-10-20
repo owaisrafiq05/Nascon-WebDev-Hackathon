@@ -22,7 +22,10 @@ export function AppointmentsPage() {
 
   return (
     <PageContainer>
-      <PageTitle sub="Appointments booked with your contacts. Times are shown in each appointment's own time zone.">
+      <PageTitle
+        kicker="Work"
+        sub="Appointments booked with your contacts. Times are shown in each appointment's own time zone."
+      >
         Appointments
       </PageTitle>
 

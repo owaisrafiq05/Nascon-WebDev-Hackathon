@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { PageTitle, SURFACE } from '../../components/ui.js';
 import {
   useCreateSavedList,
   useDeleteSavedList,
@@ -155,14 +156,16 @@ export function ListsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Lists</h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-        A saved list stores its criteria, not its results, so it stays current as records change.
-      </p>
+      <PageTitle
+        kicker="Records"
+        sub="A saved list stores its criteria, not its results, so it stays current as records change."
+      >
+        Lists
+      </PageTitle>
 
       <section
         aria-labelledby="builder-heading"
-        className="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+        className={`mt-6 ${SURFACE} p-5`}
       >
         <h2
           id="builder-heading"

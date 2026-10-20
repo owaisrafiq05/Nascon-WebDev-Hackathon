@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { Alert } from '../../components/Alert.js';
+import { Empty, LINK_CLASS } from '../../components/ui.js';
 import { ApiError } from '../../lib/api.js';
 import { useMoveOpportunity, useOpportunities, type Pipeline } from './crm-api.js';
 import { MoveToStageMenu } from './MoveToStageMenu.js';
@@ -41,9 +42,7 @@ export function OpportunityList({ pipeline, canEdit }: OpportunityListProps) {
       </div>
 
       {opportunities.data !== undefined && opportunities.data.items.length === 0 && (
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          No opportunities in this pipeline yet.
-        </p>
+        <Empty>No opportunities in this pipeline yet.</Empty>
       )}
 
       {opportunities.data !== undefined && opportunities.data.items.length > 0 && (
@@ -77,7 +76,7 @@ export function OpportunityList({ pipeline, canEdit }: OpportunityListProps) {
                   <td className="py-2 pr-4">
                     <Link
                       to={`/opportunities/${opportunity.id}`}
-                      className="font-medium text-slate-900 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-100"
+                      className={`font-medium ${LINK_CLASS}`}
                     >
                       {opportunity.name}
                     </Link>

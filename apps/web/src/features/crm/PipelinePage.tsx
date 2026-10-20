@@ -3,6 +3,8 @@ import { useState } from 'react';
 
 import { Alert } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
+import { CONTROL_CLASS } from '../../components/Select.js';
+import { KICKER_CLASS } from '../../components/ui.js';
 import { useSession } from '../auth/session.js';
 import { usePipelines } from './crm-api.js';
 import { OpportunityList } from './OpportunityList.js';
@@ -31,7 +33,12 @@ export function PipelinePage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Pipeline</h1>
+        <div>
+          <p className={KICKER_CLASS}>Records</p>
+          <h1 className="mt-1 text-2xl font-semibold text-slate-900 sm:text-3xl dark:text-slate-50">
+            Pipeline
+          </h1>
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {available.length > 1 && (
@@ -48,7 +55,7 @@ export function PipelinePage() {
                 onChange={(event) => {
                   setPipelineId(event.target.value);
                 }}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                className={CONTROL_CLASS}
               >
                 {available.map((pipeline) => (
                   <option key={pipeline.id} value={pipeline.id}>

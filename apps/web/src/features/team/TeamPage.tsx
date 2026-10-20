@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { PageTitle, SURFACE } from '../../components/ui.js';
 import { useSession } from '../auth/session.js';
 import { PermissionMatrix } from './PermissionMatrix.js';
 import {
@@ -47,15 +48,14 @@ export function TeamPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Team</h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-        {session.data?.workspace.name}
-      </p>
+      <PageTitle kicker="Workspace" sub={session.data?.workspace.name}>
+        Team
+      </PageTitle>
 
       {canManage && (
         <section
           aria-labelledby="invite-heading"
-          className="mt-8 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+          className={`mt-8 ${SURFACE} p-5`}
         >
           <h2
             id="invite-heading"
@@ -161,7 +161,7 @@ export function TeamPage() {
             {members.data.members.map((member) => (
               <li
                 key={member.membershipId}
-                className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+                className={`${SURFACE} p-4`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">

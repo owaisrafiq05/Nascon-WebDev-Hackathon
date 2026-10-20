@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Alert } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
+import { Empty, LINK_CLASS, PageTitle, SURFACE } from '../../components/ui.js';
 import { ApiError } from '../../lib/api.js';
 import { useSession } from '../auth/session.js';
 import { CustomFieldInputs } from './CustomFieldInputs.js';
@@ -56,24 +57,29 @@ export function ContactsPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Contacts</h1>
-        {canCreate && (
-          <Button
-            type="button"
-            onClick={() => {
-              setShowForm((current) => !current);
-            }}
-          >
-            {showForm ? 'Close' : 'New contact'}
-          </Button>
-        )}
-      </div>
+      <PageTitle
+        kicker="Records"
+        sub="People and companies your workspace is working with."
+        actions={
+          canCreate ? (
+            <Button
+              type="button"
+              onClick={() => {
+                setShowForm((current) => !current);
+              }}
+            >
+              {showForm ? 'Close' : 'New contact'}
+            </Button>
+          ) : undefined
+        }
+      >
+        Contacts
+      </PageTitle>
 
       {showForm && canCreate && (
         <section
           aria-labelledby="new-contact-heading"
-          className="mt-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+          className={`mt-6 ${SURFACE} p-5`}
         >
           <h2
             id="new-contact-heading"
@@ -170,7 +176,7 @@ export function ContactsPage() {
 
       <section
         aria-labelledby="filters-heading"
-        className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+        className={`mt-6 ${SURFACE} p-4`}
       >
         <h2 id="filters-heading" className="sr-only">
           Search and filters
@@ -233,9 +239,7 @@ export function ContactsPage() {
         )}
         <Alert error={contacts.error} />
         {contacts.data !== undefined && contacts.data.items.length === 0 && (
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            No contacts match those filters.
-          </p>
+          <Empty>No contacts match those filters.</Empty>
         )}
       </div>
 
@@ -269,7 +273,7 @@ export function ContactsPage() {
                     <td className="py-2 pr-4">
                       <Link
                         to={`/contacts/${contact.id}`}
-                        className="font-medium text-slate-900 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:text-slate-100"
+                        className={`font-medium ${LINK_CLASS}`}
                       >
                         {`${contact.firstName} ${contact.lastName}`.trim()}
                       </Link>

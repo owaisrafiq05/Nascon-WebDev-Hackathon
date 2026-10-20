@@ -20,7 +20,9 @@ export function ConversationsPage() {
 
   return (
     <PageContainer>
-      <PageTitle sub="WhatsApp and SMS threads with your contacts.">Conversations</PageTitle>
+      <PageTitle kicker="Work" sub="WhatsApp and SMS threads with your contacts.">
+        Conversations
+      </PageTitle>
 
       {canSeeAll && (
         <label className="mb-4 flex items-center gap-2 text-sm">

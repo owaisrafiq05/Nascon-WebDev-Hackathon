@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { Alert } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
+import { PageTitle, SURFACE } from '../../components/ui.js';
 import { apiRequest } from '../../lib/api.js';
 import { useMembers } from '../team/team-api.js';
 
@@ -109,14 +110,16 @@ export function AuditPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Audit log</h1>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-        Every important change, with who made it and when. Entries can never be edited or removed.
-      </p>
+      <PageTitle
+        kicker="Workspace"
+        sub="Every important change, with who made it and when. Entries can never be edited or removed."
+      >
+        Audit log
+      </PageTitle>
 
       <section
         aria-labelledby="filters-heading"
-        className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+        className={`mt-6 ${SURFACE} p-4`}
       >
         <h2 id="filters-heading" className="sr-only">
           Filters

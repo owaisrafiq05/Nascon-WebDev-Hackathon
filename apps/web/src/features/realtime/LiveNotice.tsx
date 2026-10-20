@@ -24,7 +24,7 @@ export function LiveNotice({
       className="fixed right-3 bottom-3 left-3 z-50 sm:left-auto sm:max-w-sm"
     >
       {notice !== null && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 shadow-lg dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-300 border-l-4 border-l-brass bg-white p-3 text-sm text-slate-900 shadow-lg dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
           <span>{notice}</span>
           <span className="flex gap-3">
             <Link to="/leads" className="underline" onClick={onDismiss}>

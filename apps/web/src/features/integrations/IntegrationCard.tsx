@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Field } from '../../components/Field.js';
-import { Badge, MUTED } from '../../components/ui.js';
+import { Badge, MUTED, SURFACE } from '../../components/ui.js';
 import { ApiError } from '../../lib/api.js';
 import { formatDateTime, humanize } from '../../lib/format.js';
 import {
@@ -36,10 +36,10 @@ export function IntegrationCard({ integration }: { integration: Integration }) {
   return (
     <section
       aria-labelledby={`${id}-heading`}
-      className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-900"
+      className={`${SURFACE} p-4 sm:p-5`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={`${id}-heading`} className="text-lg font-semibold">
+        <h2 id={`${id}-heading`} className="text-sm font-semibold tracking-tight">
           {integration.name}
         </h2>
         <Badge tone={status.tone} symbol={status.symbol}>

@@ -41,7 +41,7 @@ function RequireSession({ children }: { children: ReactElement }) {
   // member out on every reload.
   if (session.isPending) {
     return (
-      <p className="p-6 text-sm text-slate-600 dark:text-slate-400" role="status">
+      <p className="p-6 font-mono text-sm text-slate-600 dark:text-slate-400" role="status">
         Checking your session…
       </p>
     );

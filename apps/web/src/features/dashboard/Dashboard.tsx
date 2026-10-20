@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Alert, Notice } from '../../components/Alert.js';
 import { Button } from '../../components/Button.js';
 import { Select } from '../../components/Select.js';
+import { KICKER_CLASS } from '../../components/ui.js';
 import {
   DASHBOARD_RANGES,
   RANGE_LABELS,
@@ -36,14 +37,15 @@ export function Dashboard() {
     <section aria-labelledby="dashboard-heading">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
+          <p className={KICKER_CLASS}>Today’s desk</p>
           <h1
             id="dashboard-heading"
-            className="text-2xl font-bold text-slate-900 dark:text-slate-50"
+            className="mt-1 text-2xl font-semibold text-slate-900 sm:text-3xl dark:text-slate-50"
           >
             Dashboard
           </h1>
           {data !== undefined && (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               {data.scope === 'company' ? 'Whole company' : 'Your own figures'}
             </p>
           )}
@@ -79,7 +81,7 @@ export function Dashboard() {
       {customizing && data !== undefined && (
         <fieldset
           id="dashboard-customize"
-          className="mt-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
+          className="mt-4 rounded-lg border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
         >
           <legend className="px-1 text-sm font-semibold">Show these tiles</legend>
           <ul className="mt-1 flex flex-col gap-2">
@@ -155,7 +157,7 @@ function Skeletons() {
         {[0, 1, 2, 3, 4, 5].map((n) => (
           <li
             key={n}
-            className="h-28 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800"
+            className="h-32 animate-pulse rounded-lg border border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-800"
             aria-hidden="true"
           />
         ))}
@@ -172,20 +174,24 @@ function Tile({ tile }: { tile: DashboardTile }) {
     tile.drillDown === null || tile.drillDown === undefined ? null : drillDownHref(tile.drillDown);
 
   return (
-    <article className="h-full rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-      <h2 className="text-sm font-medium text-slate-600 dark:text-slate-400">
+    <article className="group relative h-full overflow-hidden rounded-lg border border-slate-300 bg-white p-4 transition-colors duration-150 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500">
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-0.5 bg-navy transition-colors duration-150 group-hover:bg-brass dark:bg-brass-bright"
+      />
+      <h2 className="font-mono text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400">
         {href === null ? (
           tile.label
         ) : (
           <Link
             to={href}
-            className="underline underline-offset-2 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none dark:focus-visible:ring-slate-100"
+            className="underline decoration-brass-bright decoration-2 underline-offset-4 focus-visible:ring-2 focus-visible:ring-navy focus-visible:outline-none dark:focus-visible:ring-brass-bright"
           >
             {tile.label}
           </Link>
         )}
       </h2>
-      <p className="mt-1 text-2xl font-bold break-words text-slate-900 dark:text-slate-50">
+      <p className="mt-2 font-mono text-3xl font-semibold tracking-tight break-words text-slate-900 tabular-nums dark:text-slate-50">
         {tile.display}
       </p>
       {tile.description !== '' && (

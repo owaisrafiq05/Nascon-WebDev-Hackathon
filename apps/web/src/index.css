@@ -1,5 +1,124 @@
 @import 'tailwindcss';
 
+/*
+  Ledger desk. Warm paper, ink text, a navy rail, and brass for actions.
+  Slate is remapped so existing screens pick up the same surfaces.
+*/
+@theme {
+  --font-sans: 'Fira Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --color-navy: #0e1a2b;
+  --color-navy-raise: #1a2e4a;
+  --color-brass: #d97706;
+  --color-brass-bright: #e0b15a;
+  --color-brass-ink: #1a1206;
+
+  --color-slate-50: #f7f4ee;
+  --color-slate-100: #efebe3;
+  --color-slate-200: #e4ddd2;
+  --color-slate-300: #d0c6b8;
+  --color-slate-400: #a89c8c;
+  --color-slate-500: #7a7064;
+  --color-slate-600: #5c5348;
+  --color-slate-700: #3f3832;
+  --color-slate-800: #2a2520;
+  --color-slate-900: #1a1612;
+  --color-slate-950: #100e0c;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background-color: var(--color-slate-50);
+    color: var(--color-slate-900);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-mono);
+    letter-spacing: -0.03em;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-navy);
+  }
+
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--color-slate-300);
+  }
+
+  tbody tr {
+    transition: background-color 150ms ease;
+  }
+
+  tbody tr:hover {
+    background-color: color-mix(in srgb, var(--color-slate-100) 80%, transparent);
+  }
+
+  a,
+  button,
+  summary,
+  [role='button'] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  ::selection {
+    background: var(--color-brass-bright);
+    color: var(--color-brass-ink);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--color-slate-950);
+    color: var(--color-slate-100);
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-brass-bright);
+  }
+
+  th {
+    border-bottom-color: var(--color-slate-700);
+  }
+
+  tbody tr:hover {
+    background-color: color-mix(in srgb, var(--color-slate-800) 80%, transparent);
+  }
+}
+
+@keyframes desk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.desk-rise {
+  animation: desk-rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 /* Respect a user who has asked for less motion (Q8). */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -16,7 +16,7 @@ export function Alert({ error }: { error: unknown }) {
   return (
     <div
       role="alert"
-      className="rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950"
+      className="rounded-lg border border-red-300 border-l-4 border-l-red-700 bg-red-50 p-3 dark:border-red-800 dark:border-l-red-400 dark:bg-red-950"
     >
       <p className="text-sm font-medium text-red-900 dark:text-red-200">{message}</p>
       {hint !== undefined && <p className="mt-1 text-sm text-red-800 dark:text-red-300">{hint}</p>}
@@ -29,7 +29,7 @@ export function Notice({ children }: { children: React.ReactNode }) {
   return (
     <div
       role="status"
-      className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+      className="rounded-lg border border-emerald-300 border-l-4 border-l-emerald-700 bg-emerald-50 p-3 text-sm text-emerald-950 dark:border-emerald-800 dark:border-l-emerald-400 dark:bg-emerald-950 dark:text-emerald-100"
     >
       {children}
     </div>
